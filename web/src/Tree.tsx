@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { Tree, type NodeApi, type NodeRendererProps, type TreeApi } from "react-arborist";
 import { iconUrl, libraryEdits, type LibraryResponse, type LibraryView, type ModEntry } from "./api";
 import { allFolders, buildTree, folderId, freshName, isPredefined, SORTOUT_ID, type TreeNode } from "./treeData";
@@ -57,6 +57,24 @@ function canDropInto(zone: NodeApi<TreeNode> | null, dragged: NodeApi<TreeNode>[
 }
 
 const TreeContext = createContext<Ctx>(null!);
+
+/** A context menu at the cursor, flipped up and/or left when it would not fit in the viewport. */
+function ContextMenu({ x, y, children }: { x: number; y: number; children: ReactNode }) {
+  const ref = useRef<HTMLUListElement>(null);
+  const [pos, setPos] = useState({ left: x, top: y });
+  useLayoutEffect(() => {
+    const r = ref.current!.getBoundingClientRect();
+    setPos({
+      left: x + r.width > window.innerWidth ? Math.max(0, x - r.width) : x,
+      top: y + r.height > window.innerHeight ? Math.max(0, y - r.height) : y,
+    });
+  }, [x, y]);
+  return (
+    <ul className="menu" ref={ref} style={pos}>
+      {children}
+    </ul>
+  );
+}
 
 /** Placeholder for mods without an icon: a jigsaw piece. */
 function PuzzleIcon() {
@@ -213,8 +231,18 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
   useEffect(() => {
     if (!menu) return;
     const close = () => setMenu(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    // Scroll does not bubble; capture catches the tree's own scroll container too.
     window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("keydown", onKey);
+    };
   }, [menu]);
 
   const parentOf = (node: NodeApi<TreeNode> | null): TreeNode | null => (node && !node.isRoot ? node.data : null);
@@ -330,7 +358,7 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
         )}
       </div>
       {menu && (
-        <ul className="menu" style={{ left: menu.x, top: menu.y }}>
+        <ContextMenu x={menu.x} y={menu.y}>
           {menu.node?.kind === "folder" ? (
             <>
               <li onClick={() => createFolder(menu.node as FolderNode)}>New subfolder</li>
@@ -349,7 +377,7 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
           ) : (
             <li onClick={() => createFolder(null)}>New folder</li>
           )}
-        </ul>
+        </ContextMenu>
       )}
     </TreeContext.Provider>
   );
