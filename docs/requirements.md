@@ -128,12 +128,20 @@ Activate turns a build into the game's mod list in a straight run, then hands so
 1. Collect the explicitly selected mods of the build.
 2. Add transitive dependencies (from About.xml).
 3. Add translations of every mod in the set.
-4. Check for problems: missing mods, missing dependencies. A missing dependency **blocks activation** and is listed: the game would not run with that list anyway, and the fix (subscribing and adding the mod) happens through this app.
+4. Check for problems: missing mods, missing dependencies. A missing dependency **blocks activation** and is listed: the game would not run with that list anyway, and the fix (subscribing and adding the mod) happens through this app. A missing *selected* mod only produces a warning: the rest of the list still runs.
 5. Back up the current `ModsConfig.xml`.
 6. Write the new mod list directly to `ModsConfig.xml` (the file the game reads; RimSort works on the same file).
 7. Launch RimSort to sort by community rules.
 
 Sorting logic is not reimplemented: community rules change and are maintained by others.
+
+## Core and DLCs
+
+Core and the DLCs (`ludeon.rimworld`, `ludeon.rimworld.royalty`, `ludeon.rimworld.biotech`, …) live in the game's install folder, not in Workshop. For the first version they are not scanned: the known Ludeon packageIds are treated as always installed (all DLCs are owned).
+
+- Core is always written to the mod list.
+- A DLC is added to the mod list only when some mod in the set requires it.
+- The UI shows which DLCs a build requires.
 
 ## Platform and stack
 
@@ -174,6 +182,4 @@ The MVP is tree + checkboxes + builds + export; everything else waits until it h
 ## Open questions
 
 
-- [ ] A missing *selected* mod (not a dependency) at activation: block too, or drop it and continue? The sync table currently says "warn at activation".
 - [ ] Are mods in `Library/Framework` hidden by default (like translations), or is it a normal visible folder? They join builds automatically as dependencies either way.
-- [ ] Core and DLCs (`ludeon.rimworld`, `ludeon.rimworld.biotech`, …) live in the game's install folder, not in Workshop, yet appear in `ModsConfig.xml` and as dependencies. Scan the game's `Data` folder (one more path in settings), or treat the known Ludeon ids as always present?
