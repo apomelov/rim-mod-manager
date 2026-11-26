@@ -18,7 +18,7 @@ Stack: Kotlin + Ktor backend, React + TypeScript (Vite) frontend, one Gradle pro
 
 1. Work in tasks the size of one MVP step.
 2. Non-trivial task → short plan first (files, approach, how it will be verified). Small things → just do them.
-3. For pure logic (export pipeline, transitive dependencies, translation matching, sync rules, tri-state folders): write tests from the spec first, let the user review them, then implement.
+3. For pure logic (export pipeline, transitive dependencies, translation matching, sync rules, tri-state folders): write tests from the spec first, then implement. No up-front test review: the user reviews the whole project every few iterations, or limits review to user acceptance tests.
 4. Verify with tests and, where relevant, real data. Report honestly what was verified and what was not.
 5. Commits:
    - **Docs** (`docs/`, `CLAUDE.md`): commit without asking, in a separate docs-only commit, as soon as an agreed decision has been documented.

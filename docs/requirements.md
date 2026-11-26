@@ -25,11 +25,11 @@ Two orthogonal axes: the **tree** answers "what do I have", **builds** answer "w
 |---|---|---|
 | Mod | A mod found in the mods folder on disk | Disk scan |
 | Library tree | Folders and subfolders holding mods; the single user-defined ontology | User (drag and drop) |
-| Hidden mod | Translations; not shown unless "show hidden" is on. Libraries are not hidden: they live in an ordinary `Library` folder | Derived, with user overrides |
-| Translation link | Translation mod → the mod(s) it translates | Derived, with user overrides |
+| Hidden mod | A mod marked as a translation; not shown unless "show hidden" is on. Libraries are not hidden: they live in an ordinary `Library` folder | Follows the translation mark |
+| Translation link | Translation mod → the mod(s) it translates | User (marking); auto-suggestions later |
 | Dependency | Mod → mods it requires, from About.xml | Disk scan only |
 | Build | Named set of explicitly selected mods (a tab) | User |
-| Sortout | Virtual inbox folder: mods on disk that are not placed in the tree (hidden translations excluded) | Computed, never stored |
+| Sortout | Virtual inbox folder: mods on disk that are not placed in the tree and are not shown under an original | Computed, never stored |
 
 Rule of thumb: anything derivable from disk is recomputed and never stored; only user decisions are persisted.
 
@@ -46,8 +46,7 @@ Disk is the source of truth about mods; a single user file holds only decisions.
 **User file (persisted):**
 
 - Library tree: folders, order, which mod sits where.
-- Translation link overrides (manual fixes on top of auto-matching).
-- Hidden/visible overrides.
+- Translation links: which mods are translations and what they translate.
 - Builds: name, explicitly selected mods.
 - Optional per-mod notes.
 
@@ -66,29 +65,29 @@ The library is a file-manager-style tree with drag and drop; checkboxes next to 
 - **Drag and drop** moves mods and folders.
 - **Checkboxes** reflect the build in the current tab. A mod's checkbox is the stored state.
 - **Folder checkbox is purely derived**: all children checked, some, or none (tri-state). Clicking it checks or unchecks all descendants. It stores nothing itself.
-- **Hidden mods** (translations) are not shown; a "show hidden" toggle reveals them.
+- **Hidden mods** (marked translations) are not shown; a "show hidden" toggle reveals them.
+- **Translations sit under their original**: a marked translation is shown as a child row of each original mod it translates that is on disk, wherever that original is (a folder or Sortout). If none of its originals is on disk, it stays in Sortout. So a translation is always findable (with "show hidden") and can be re-marked.
 - **Missing mods** (in the tree but not on disk) are shown greyed out.
-- **Sortout** is a virtual folder, always first: it is computed as every mod on disk not placed in the tree (hidden translations excluded) and is never stored. On the very first run every mod lands there.
+- **Sortout** is a virtual folder, always first: it is computed as every mod on disk that is neither placed in the tree nor shown under an original, and is never stored. On the very first run every mod lands there.
 - **Folder contents** are ordered like a file manager: subfolders first, then mods. Folders remember their expanded/collapsed state.
 - **Predefined folders** are created when the library file does not exist yet: `Library`, `UI`, `UX`, `QoL`, `Tools` (taken from the user's earlier tagging drafts; the rest are created by hand). Libraries are identified by the user placing them there on the first run, not by a heuristic: libraries appear rarely, and there are no builds yet to derive anything from.
 
 ## Translations
 
-Translation links are derived once, corrected by hand where needed, and then applied silently at export.
+A mod is a translation only once the user marks it as one; until then it sits in Sortout like any other mod. Marked translations are hidden and applied silently at export.
 
-**Initial classification and matching (one-off):**
-
-1. Load all mods (name, description, Workshop id) and classify translation vs original by reading the descriptions, not by keyword heuristics like "RU" or "Rus".
-2. For each translation, find its original(s). Workshop links in the description (`?id=…`) are the strongest evidence and serve as a cross-check; links to known libraries are ignored.
-3. Output only a mapping table: translation packageId → original packageId(s). A small script merges it into the user file and builds the reverse links. Nothing is retyped by hand.
+**Marking (MVP):** mark a mod as a translation and pick the mod(s) it translates; unmark or re-link at any time. The mark lives in the user file and is the source of truth.
 
 **Rules:**
 
 - `translates` and `translatedBy` are both lists: one translation can cover a pack of mods, one mod can have several translations.
 - `translatedBy` is always computed from `translates`, never stored separately.
-- A translation of a mod not in the collection keeps the target id (e.g. `translatesMissing`) rather than losing it.
-- Auto-derived links are recomputed; manual overrides in the user file take precedence and survive recomputation.
-- New translations added later are matched the same way and flagged for review.
+- A translation of a mod not in the collection keeps the target id rather than losing it.
+- A marked translation is hidden: it is shown only with "show hidden", under its original(s) (see Library tree UI).
+
+**Finding translations in Sortout (later):** a helper that reads names, descriptions and Workshop links (`?id=…`, the strongest evidence; links to known libraries ignored) and *suggests* marks for mods still in Sortout. It classifies by reading descriptions, not by keyword heuristics like "RU" or "Rus". Suggestions are reviewed by the user, never applied silently.
+
+Why manual first: the mark must be correct and always reconfigurable; automation only saves typing and can come once the basics are in use.
 
 ## Builds
 
@@ -114,11 +113,11 @@ On every start the disk scan is reconciled with the user file; nothing the user 
 
 | Situation | Action |
 |---|---|
-| Mod on disk, not in tree | Shows up in Sortout (or hidden, if it is a translation); nothing is written |
+| Mod on disk, not in tree | Shows up in Sortout (or under its original, if marked as a translation); nothing is written |
 | Mod in tree, not on disk | Keep its place, show greyed out as missing |
 | Missing mod selected in a build | Keep it; warn at activation |
 | Mod updated on disk | Nothing; metadata is reread anyway |
-| New translation appears | Auto-match, flag for review |
+| New translation appears | Lands in Sortout like any new mod until marked |
 
 A separate "Remove missing" action cleans up missing mods deliberately; mods are often unsubscribed and resubscribed, so their tree position should survive.
 
@@ -163,13 +162,14 @@ The MVP is tree + checkboxes + builds + export; everything else waits until it h
 **MVP:**
 
 - Disk scan and sync rules.
-- One-off translation matching and auto-inclusion.
+- Marking translations by hand; auto-inclusion at export.
 - Library tree with drag and drop, derived tri-state folder checkboxes, show hidden.
 - Build tabs: create, duplicate, rename, activate.
 - Export pipeline with backup and RimSort hand-off.
 
 **Later:**
 
+- Finding translations in Sortout (suggested marks).
 - Reverse detection with diffs.
 - Build export/import for multiplayer.
 - Per-mod notes.
