@@ -51,3 +51,4 @@ The file is trusted but checked; problems are reported, never silently fixed on 
 - A mod listed in several folders → the first occurrence (depth-first, file order) wins; the others are reported.
 - Duplicate sibling folder names → reported; both are kept until the user renames one.
 - Malformed YAML → the app refuses to start the library view and shows the error; the file is not overwritten.
+- Any edit made in the app rewrites the file from the loaded model, so reported problems (e.g. a mod listed twice) are resolved on that save the way they were displayed.
