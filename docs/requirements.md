@@ -23,9 +23,9 @@ Two orthogonal axes: the **tree** answers "what do I have", **builds** answer "w
 
 | Concept | What it is | Who maintains it |
 |---|---|---|
-| Mod | A mod found on disk (Workshop or local Mods folder) | Disk scan |
+| Mod | A mod found in the mods folder on disk | Disk scan |
 | Library tree | Folders and subfolders holding mods; the single user-defined ontology | User (drag and drop) |
-| Hidden mod | Translations and libraries (Harmony, HugsLib, etc.); not shown unless "show hidden" is on | Derived, with user overrides |
+| Hidden mod | Translations and libraries (Harmony, HugsLib, etc.); not shown unless "show hidden" is on | Translations: derived, with user overrides. Libraries: user (placed in the Library/Framework folder) |
 | Translation link | Translation mod → the mod(s) it translates | Derived, with user overrides |
 | Dependency | Mod → mods it requires, from About.xml | Disk scan only |
 | Build | Named set of explicitly selected mods (a tab) | User |
@@ -39,7 +39,7 @@ Disk is the source of truth about mods; a single user file holds only decisions.
 
 **From disk (rescanned on every start, never persisted):**
 
-- Workshop folder and local `Mods` folder.
+- One mods folder: the Steam Workshop content folder (path set in the app's configuration). The local `Mods` folder is not used.
 - Per mod: `About/About.xml` (packageId, name, description, author, modDependencies, loadAfter/loadBefore, supported versions) and `About/PublishedFileId.txt` (Workshop id).
 - Scanning a few hundred mods is fast enough that no cache is needed.
 
@@ -53,7 +53,9 @@ Disk is the source of truth about mods; a single user file holds only decisions.
 
 **Storage:** one human-readable JSON (or YAML) file, loaded whole into memory and saved whole. Keep it under git for history and undo. A DBMS is overkill at this size (hundreds of records, tens of KB); SQLite is the fallback if complex queries ever appear.
 
-**Identity:** packageId is the primary key; it is what the game uses in `ModsConfig.xml` and survives resubscribing. Workshop id is stored alongside. The same packageId may exist both in Workshop and in local Mods; a precedence rule is needed (see Open questions).
+**Identity:** packageId is the only key; it is what the game uses in `ModsConfig.xml` and survives resubscribing. The Workshop id from `PublishedFileId.txt` is read as metadata only (e.g. to resolve `?id=…` links when matching translations).
+
+**Configuration:** paths are app settings, not hard-coded: the mods folder (Workshop content) and the game's mod list file `ModsConfig.xml` (on Linux usually under `~/.config/unity3d/Ludeon Studios/RimWorld by Ludeon Studios/Config/`).
 
 ## Library tree UI
 
@@ -66,7 +68,8 @@ The library is a file-manager-style tree with drag and drop; checkboxes next to 
 - **Folder checkbox is purely derived**: all children checked, some, or none (tri-state). Clicking it checks or unchecks all descendants. It stores nothing itself.
 - **Hidden mods** (translations, libraries) are not shown; a "show hidden" toggle reveals them.
 - **Missing mods** (in the tree but not on disk) are shown greyed out.
-- **Unsorted** folder collects new mods until they are placed.
+- **Unsorted** folder collects new mods until they are placed. On the very first run every mod lands there.
+- **Predefined folders** exist from the start, including `Library/Framework`. Libraries are identified by the user placing them there on the first run, not by a heuristic: libraries appear rarely, and there are no builds yet to derive anything from.
 
 ## Translations
 
@@ -125,9 +128,9 @@ Activate turns a build into the game's mod list in a straight run, then hands so
 1. Collect the explicitly selected mods of the build.
 2. Add transitive dependencies (from About.xml).
 3. Add translations of every mod in the set.
-4. Check for problems: missing mods, missing dependencies. Show them and let the user decide (see Open questions).
+4. Check for problems: missing mods, missing dependencies. A missing dependency **blocks activation** and is listed: the game would not run with that list anyway, and the fix (subscribing and adding the mod) happens through this app.
 5. Back up the current `ModsConfig.xml`.
-6. Write the new mod list to `ModsConfig.xml` (or a list RimSort can import).
+6. Write the new mod list directly to `ModsConfig.xml` (the file the game reads; RimSort works on the same file).
 7. Launch RimSort to sort by community rules.
 
 Sorting logic is not reimplemented: community rules change and are maintained by others.
@@ -170,8 +173,7 @@ The MVP is tree + checkboxes + builds + export; everything else waits until it h
 
 ## Open questions
 
-- [ ] Missing dependency at export: warn and continue, or block activation?
-  *(Doc comment: default proposal is warn and continue, so activation never gets stuck.)*
-- [ ] Same packageId in Workshop and local Mods: which one wins?
-- [ ] Write `ModsConfig.xml` directly, or produce a list for RimSort to import?
-- [ ] Which mods count as libraries to hide: a fixed list, or anything that is only ever a dependency?
+
+- [ ] A missing *selected* mod (not a dependency) at activation: block too, or drop it and continue? The sync table currently says "warn at activation".
+- [ ] Are mods in `Library/Framework` hidden by default (like translations), or is it a normal visible folder? They join builds automatically as dependencies either way.
+- [ ] Core and DLCs (`ludeon.rimworld`, `ludeon.rimworld.biotech`, …) live in the game's install folder, not in Workshop, yet appear in `ModsConfig.xml` and as dependencies. Scan the game's `Data` folder (one more path in settings), or treat the known Ludeon ids as always present?
