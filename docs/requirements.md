@@ -25,7 +25,7 @@ Two orthogonal axes: the **tree** answers "what do I have", **builds** answer "w
 |---|---|---|
 | Mod | A mod found in the mods folder on disk | Disk scan |
 | Library tree | Folders and subfolders holding mods; the single user-defined ontology | User (drag and drop) |
-| Hidden mod | Translations; not shown unless "show hidden" is on. Libraries are not hidden: they live in an ordinary `Library/Framework` folder | Derived, with user overrides |
+| Hidden mod | Translations; not shown unless "show hidden" is on. Libraries are not hidden: they live in an ordinary `Library` folder | Derived, with user overrides |
 | Translation link | Translation mod → the mod(s) it translates | Derived, with user overrides |
 | Dependency | Mod → mods it requires, from About.xml | Disk scan only |
 | Build | Named set of explicitly selected mods (a tab) | User |
@@ -51,7 +51,7 @@ Disk is the source of truth about mods; a single user file holds only decisions.
 - Builds: name, explicitly selected mods.
 - Optional per-mod notes.
 
-**Storage:** one human-readable JSON (or YAML) file, loaded whole into memory and saved whole. Keep it under git for history and undo. A DBMS is overkill at this size (hundreds of records, tens of KB); SQLite is the fallback if complex queries ever appear.
+**Storage:** one human-readable YAML file (YAML so it is easy to edit by hand), loaded whole into memory and saved whole. Location: `~/.config/rimmodmanager/` (respecting `$XDG_CONFIG_HOME`), next to the app settings. Strictly it is data rather than configuration, but keeping everything in one folder makes it easy to find, edit and put under git. Keep it under git for history and undo. A DBMS is overkill at this size (hundreds of records, tens of KB); SQLite is the fallback if complex queries ever appear.
 
 **Identity:** packageId is the only key; it is what the game uses in `ModsConfig.xml` and survives resubscribing. The Workshop id from `PublishedFileId.txt` is read as metadata only (e.g. to resolve `?id=…` links when matching translations).
 
@@ -69,7 +69,7 @@ The library is a file-manager-style tree with drag and drop; checkboxes next to 
 - **Hidden mods** (translations) are not shown; a "show hidden" toggle reveals them.
 - **Missing mods** (in the tree but not on disk) are shown greyed out.
 - **Unsorted** folder collects new mods until they are placed. On the very first run every mod lands there.
-- **Predefined folders** exist from the start, including `Library/Framework`. Libraries are identified by the user placing them there on the first run, not by a heuristic: libraries appear rarely, and there are no builds yet to derive anything from.
+- **Predefined folders** exist from the start: `Unsorted`, `Library`, `UI`, `UX`, `QoL`, `Tools` (taken from the user's earlier tagging drafts; the rest are created by hand). Libraries are identified by the user placing them there on the first run, not by a heuristic: libraries appear rarely, and there are no builds yet to derive anything from.
 
 ## Translations
 
