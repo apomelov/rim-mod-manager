@@ -62,4 +62,4 @@ Not read: `modVersion`, `modIconPath`, `descriptionsByVersion`, `steamWorkshopUr
 ## Errors
 
 - Malformed XML or missing `packageId` → the mod is reported in a scan-problems list and skipped; the scan never fails as a whole.
-- Duplicate `packageId` across folders → both reported; the game itself only loads the first, so this is a real problem for the user to fix.
+- Duplicate `packageId` across folders → all copies reported as problems; the scanner keeps the first by folder-name order (the game itself loads only one), so this is a real problem for the user to fix.
