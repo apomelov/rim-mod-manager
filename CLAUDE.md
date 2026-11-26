@@ -23,7 +23,8 @@ Stack: Kotlin + Ktor backend, React + TypeScript (Vite) frontend, one Gradle pro
    - UI is tested manually by the user for now: no browser automation (Playwright etc.). Claude checks the API and typechecks the client, then hands over a short manual test checklist.
 5. Commits:
    - **Docs** (`docs/`, `CLAUDE.md`): commit without asking, in a separate docs-only commit, as soon as an agreed decision has been documented.
-   - **Code**: commit only when the user says so.
+   - **Code**: commit only when the user says so. Offer a commit as soon as a step is verified, so changes do not pile up.
+   - **Size**: small commits; a good commit is one its first line fully describes.
 
 ## Permissions
 
