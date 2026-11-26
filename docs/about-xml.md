@@ -31,8 +31,10 @@ Where the wiki is silent, the rules below come from a survey of the user's libra
 | `loadAfter`, `loadBefore`, `forceLoadAfter`, `forceLoadBefore` (+ `…ByVersion`) | list of `<li>` packageIds | Metadata only; ordering is RimSort's job. |
 | `incompatibleWith` (+ `ByVersion`) | list of `<li>` packageIds | Metadata; may be shown as a warning later. |
 | `url` | text | Optional link. |
+| `modVersion` | text | The mod's own version (1.4+); shown in the details panel. |
+| `modIconPath` | text | Icon texture path, see Images. |
 
-Not read: `modVersion`, `modIconPath`, `descriptionsByVersion`, `steamWorkshopUrl` (top-level), `downloadUrl`.
+Not read: `descriptionsByVersion`, `steamWorkshopUrl` (top-level), `downloadUrl`.
 
 ### Dependency item
 
@@ -53,6 +55,17 @@ Not read: `modVersion`, `modIconPath`, `descriptionsByVersion`, `steamWorkshopUr
 - Keys are written `v<major>.<minor>` (`v1.6`). *(survey: v1.1–v1.7 occur.)*
 - The game version comes from `<version>` in `ModsConfig.xml` (currently `1.6.4871 rev598` → `1.6`).
 - Resolution (wiki does not specify fallback; this follows the wiki's "overrides" wording): if a `…ByVersion` element has a key for the game version, use it; otherwise use the plain element. Other version keys are ignored.
+
+## Images
+
+Neither image is required; the UI shows a placeholder when one is missing. File names are matched case-insensitively *(survey: `Preview.png` 139, `preview.png` 48)*.
+
+- **Preview** (details panel): `About/Preview.png`. About.xml has no field for it.
+- **Icon** (tree rows), first match wins:
+  1. `modIconPath` (1.5+): a texture path without extension, relative to a `Textures` folder. Searched as `**/Textures/<path>.png` anywhere inside the mod folder (mods keep textures in `Textures/`, `1.6/Textures/`, `Common/Textures/`, …).
+  2. If not found in the mod itself, the same path in the mod's dependencies' folders *(survey: 15 Vanilla Expanded mods point at `UI/VELogo`, which lives in their framework dependency)*.
+  3. `About/ModIcon.png` (loaded automatically by the game since 1.5).
+- Images are resolved during the scan; the API serves only those resolved files, never a path supplied by the client.
 
 ## Core and DLCs
 

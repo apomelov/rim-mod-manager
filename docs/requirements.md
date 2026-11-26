@@ -72,6 +72,10 @@ The library is a file-manager-style tree with drag and drop; checkboxes next to 
 - **Folder contents** are ordered like a file manager: subfolders first, then mods. Folders remember their expanded/collapsed state.
 - **Predefined folders** are created when the library file does not exist yet: `Library`, `UI`, `UX`, `QoL`, `Tools` (taken from the user's earlier tagging drafts; the rest are created by hand). Libraries are identified by the user placing them there on the first run, not by a heuristic: libraries appear rarely, and there are no builds yet to derive anything from.
 
+## Mod details panel
+
+A panel to the left of the tree shows the selected mod: preview image, name, packageId, mod version and supported game versions, authors, Workshop link, dependencies and the description. The description is shown as preformatted text for now (it may contain HTML-like tags, which are not interpreted yet). Tree rows show the mod's icon. Where both images come from: `docs/about-xml.md`, "Images".
+
 ## Translations
 
 A mod is a translation only once the user marks it as one; until then it sits in Sortout like any other mod. Marked translations are hidden and applied silently at export.
