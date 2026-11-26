@@ -170,6 +170,25 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
     if (window.confirm(`Delete folder "${f.path}"?${what}`)) await onEdit(libraryEdits.deleteFolder(f.path));
   }
 
+  /** The right-clicked mod, or every selected mod if it is part of a multi-selection. */
+  function menuMods(node: TreeNode): string[] {
+    const sel = tree.current?.selectedNodes.map((n) => n.data) ?? [];
+    const group = sel.some((n) => n.id === node.id) ? sel : [node];
+    return group.flatMap((n) => (n.kind === "mod" ? [n.entry.packageId] : []));
+  }
+
+  /** Where a mod row currently sits: a folder node, Sortout, or null (shown under an original). */
+  const containerOf = (node: TreeNode) => parentOf(tree.current?.get(node.id)?.parent ?? null);
+
+  function moveTargets(node: TreeNode) {
+    const here = containerOf(node);
+    const folders = data.filter((n): n is FolderNode => n.kind === "folder");
+    return [
+      ...folders.filter((f) => f.id !== here?.id).map((f) => ({ label: f.name, to: f.path as string | null })),
+      ...(here?.kind === "sortout" ? [] : [{ label: "Sortout", to: null }]),
+    ];
+  }
+
   return (
     <TreeContext.Provider value={ctx}>
       <div className="tree-box" ref={box.ref} onContextMenu={(e) => ctx.openMenu(e, null)}>
@@ -240,6 +259,12 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
               <li onClick={() => tree.current?.get(menu.node!.id)?.edit()}>Rename</li>
               <li onClick={() => deleteFolder(menu.node as FolderNode)}>Delete</li>
             </>
+          ) : menu.node?.kind === "mod" ? (
+            moveTargets(menu.node).map((t) => (
+              <li key={t.label} onClick={() => onEdit(libraryEdits.moveMods(menuMods(menu.node!), t.to, null))}>
+                Move to {t.label}
+              </li>
+            ))
           ) : (
             <li onClick={() => createFolder(null)}>New folder</li>
           )}
