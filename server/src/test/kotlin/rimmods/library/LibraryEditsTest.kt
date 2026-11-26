@@ -37,22 +37,11 @@ class LibraryEditsTest {
     }
 
     @Test
-    fun `move mods before a sibling, keeping their order`() {
-        val r = LibraryEdits.moveMods(lib, ids("u.one", "new.mod"), path("QoL"), before = id("q.two"))
-        assertEquals(ids("q.one", "u.one", "new.mod", "q.two", "q.three"), r.folder("QoL").mods)
+    fun `move mods out of other folders into one`() {
+        val r = LibraryEdits.moveMods(lib, ids("u.one", "b.one"), path("QoL"))
+        assertEquals(ids("q.one", "q.two", "q.three", "u.one", "b.one"), r.folder("QoL").mods)
         assertEquals(emptyList(), r.folder("UI").mods)
-    }
-
-    @Test
-    fun `reorder within the same folder`() {
-        val r = LibraryEdits.moveMods(lib, ids("q.three"), path("QoL"), before = id("q.one"))
-        assertEquals(ids("q.three", "q.one", "q.two"), r.folder("QoL").mods)
-    }
-
-    @Test
-    fun `before a mod that is itself being moved, or unknown, means the end`() {
-        assertEquals(ids("q.two", "q.three", "q.one"), LibraryEdits.moveMods(lib, ids("q.one"), path("QoL"), before = id("q.one")).folder("QoL").mods)
-        assertEquals(ids("u.one", "q.one"), LibraryEdits.moveMods(lib, ids("q.one"), path("UI"), before = id("nope")).folder("UI").mods)
+        assertEquals(ids("b.two"), r.folder("QoL/base").mods)
     }
 
     @Test
@@ -76,9 +65,9 @@ class LibraryEditsTest {
     // --- moving folders ---
 
     @Test
-    fun `move a folder to the root, before a sibling`() {
-        val r = LibraryEdits.moveFolder(lib, path("QoL/other"), FolderPath.ROOT, before = "UI")
-        assertEquals(listOf("QoL", "other", "UI"), r.folders.map { it.name })
+    fun `move a folder to the root`() {
+        val r = LibraryEdits.moveFolder(lib, path("QoL/other"), FolderPath.ROOT)
+        assertEquals(listOf("QoL", "UI", "other"), r.folders.map { it.name })
         assertEquals(listOf("base"), r.folder("QoL").folders.map { it.name })
     }
 
@@ -86,12 +75,6 @@ class LibraryEditsTest {
     fun `move a folder with its contents into another folder, at the end`() {
         val r = LibraryEdits.moveFolder(lib, path("QoL/base"), path("UI"))
         assertEquals(Folder("base", mods = ids("b.one", "b.two")), r.folder("UI/base"))
-    }
-
-    @Test
-    fun `reorder folders within the same parent`() {
-        val r = LibraryEdits.moveFolder(lib, path("UI"), FolderPath.ROOT, before = "QoL")
-        assertEquals(listOf("UI", "QoL"), r.folders.map { it.name })
     }
 
     @Test
@@ -107,12 +90,11 @@ class LibraryEditsTest {
     }
 
     @Test
-    fun `a predefined top-level folder cannot leave the root, but can be reordered`() {
+    fun `a predefined top-level folder cannot leave the root`() {
         assertFailsWith<LibraryEditException> { LibraryEdits.moveFolder(lib, path("UI"), path("QoL")) }
         assertFailsWith<LibraryEditException> { LibraryEdits.moveFolder(lib, path("QoL"), path("UI")) }
         val l = LibraryEdits.createFolder(lib, FolderPath.ROOT, "Content")
         assertFailsWith<LibraryEditException> { LibraryEdits.moveFolder(l, path("UI"), path("Content")) }
-        assertEquals(listOf("UI", "QoL", "Content"), LibraryEdits.moveFolder(l, path("UI"), FolderPath.ROOT, before = "QoL").folders.map { it.name })
     }
 
     @Test

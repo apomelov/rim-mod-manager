@@ -14,14 +14,14 @@ main { display: flex; flex-direction: column; min-height: 0; padding: 8px 0 0 8p
 .problems { flex: none; }
 .tree-box { flex: 1; min-height: 0; }
 
-.row { display: flex; align-items: center; gap: 6px; height: 100%; padding-right: 8px; cursor: default; white-space: nowrap; border-radius: 3px; }
-.row.selected { background: var(--select); }
-.row.current { background: var(--accent); }
-.row.drop { outline: 2px solid #7aa7f0; }
-.row.folder, .row.sortout { font-weight: 600; }
-.row.sortout { font-style: italic; }
-.row.missing .name { color: #999; }
-.row.hidden .name { color: #6a7fa8; }
+.tree-row { display: flex; align-items: center; gap: 6px; height: 100%; padding-right: 8px; cursor: default; white-space: nowrap; border-radius: 3px; }
+.tree-row.selected { background: var(--select); }
+.tree-row.current { background: var(--accent); }
+.tree-row.drop { background: #e3edff; border-radius: 0; }
+.tree-row.folder, .tree-row.sortout { font-weight: 600; }
+.tree-row.sortout { font-style: italic; }
+.tree-row.missing .name { color: #999; }
+.tree-row.hidden .name { color: #6a7fa8; }
 .arrow { width: 12px; flex: none; text-align: center; color: var(--muted); cursor: pointer; }
 .name { overflow: hidden; text-overflow: ellipsis; }
 .rename { font: inherit; padding: 0 2px; }

@@ -17,10 +17,10 @@ import rimmods.scan.PackageId
 
 /** Folder paths are `QoL/base`; the root is "". Mod ids are packageIds. */
 @Serializable
-data class MoveModsRequest(val mods: List<String>, val to: String? = null, val before: String? = null)
+data class MoveModsRequest(val mods: List<String>, val to: String? = null)
 
 @Serializable
-data class MoveFolderRequest(val from: String, val toParent: String = "", val before: String? = null)
+data class MoveFolderRequest(val from: String, val toParent: String = "")
 
 @Serializable
 data class CreateFolderRequest(val parent: String = "", val name: String)
@@ -58,11 +58,11 @@ fun Route.libraryEditRoutes(settings: Settings, state: AppState) {
 
     post("/api/library/move-mods") {
         val r = call.receive<MoveModsRequest>()
-        call.edit { LibraryEdits.moveMods(it, ids(r.mods), r.to?.let(FolderPath::parse), r.before?.let(PackageId::of)) }
+        call.edit { LibraryEdits.moveMods(it, ids(r.mods), r.to?.let(FolderPath::parse)) }
     }
     post("/api/library/move-folder") {
         val r = call.receive<MoveFolderRequest>()
-        call.edit { LibraryEdits.moveFolder(it, FolderPath.parse(r.from), FolderPath.parse(r.toParent), r.before) }
+        call.edit { LibraryEdits.moveFolder(it, FolderPath.parse(r.from), FolderPath.parse(r.toParent)) }
     }
     post("/api/library/create-folder") {
         val r = call.receive<CreateFolderRequest>()

@@ -20,6 +20,40 @@ interface Ctx {
   showHidden: boolean;
   onSelect: (packageId: string) => void;
   openMenu: (e: MouseEvent, node: TreeNode | null) => void;
+  /** The folder (or Sortout) a drag would drop into; its whole subtree is highlighted. */
+  dropZone: string | null;
+  hoverDrag: (node: NodeApi<TreeNode>) => void;
+}
+
+/** The folder or Sortout a row belongs to: the row itself if it is one, else its nearest such ancestor. */
+function zoneOf(node: NodeApi<TreeNode> | null): NodeApi<TreeNode> | null {
+  for (let n = node; n && !n.isRoot; n = n.parent) {
+    if (n.data.kind === "folder" || n.data.kind === "sortout") return n;
+  }
+  return null;
+}
+
+function inZone(node: NodeApi<TreeNode>, zone: string | null): boolean {
+  if (!zone) return false;
+  for (let n: NodeApi<TreeNode> | null = node; n && !n.isRoot; n = n.parent) if (n.id === zone) return true;
+  return false;
+}
+
+/**
+ * Whether a drag may drop into [zone]: mods into a folder or Sortout, folders into a folder (not their own subtree,
+ * not predefined ones). Nodes already in [zone] are skipped, but at least one must actually move: the zone a drag
+ * started from is not a target.
+ */
+function canDropInto(zone: NodeApi<TreeNode> | null, dragged: NodeApi<TreeNode>[]): boolean {
+  if (!zone) return false;
+  const z = zone.data;
+  const moving = dragged.filter((n) => zoneOf(n.parent)?.id !== zone.id);
+  return moving.length > 0 && moving.every((n) => {
+    const d = n.data;
+    if (d.kind === "mod") return true;
+    if (d.kind !== "folder" || z.kind !== "folder" || isPredefined(d.path)) return false;
+    return z.path !== d.path && !z.path.startsWith(d.path + "/");
+  });
 }
 
 const TreeContext = createContext<Ctx>(null!);
@@ -59,11 +93,11 @@ function Row({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
   const d = node.data;
   const entry = d.kind === "mod" || d.kind === "translation" ? d.entry : undefined;
   const classes = [
-    "row",
+    "tree-row", // not "row": react-arborist gives its drag preview container that class
     d.kind,
     node.isSelected && "selected",
     entry && entry.packageId === ctx.selected && "current",
-    node.willReceiveDrop && "drop",
+    inZone(node, ctx.dropZone) && "drop",
     entry?.missing && "missing",
     entry?.hidden && "hidden",
   ]
@@ -77,7 +111,21 @@ function Row({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
   const translationCount = entry?.translations?.length ?? 0;
 
   return (
-    <div ref={dragHandle} style={style} className={classes} onClick={onClick} onContextMenu={(e) => ctx.openMenu(e, d)}>
+    <div
+      ref={dragHandle}
+      style={style}
+      className={classes}
+      onClick={onClick}
+      onContextMenu={(e) => ctx.openMenu(e, d)}
+      onMouseDown={(e) => {
+        // Select on press, not on click, so the row being dragged is the selected one (and shown in the details).
+        // A row already in a multi-selection keeps it, so the whole selection can be dragged.
+        if (e.button !== 0 || e.ctrlKey || e.shiftKey || e.metaKey || node.isSelected || node.isEditing) return;
+        node.select();
+        if (entry) ctx.onSelect(entry.packageId);
+      }}
+      onDragOver={() => ctx.hoverDrag(node)}
+    >
       <span
         className="arrow"
         onClick={(e) => {
@@ -115,6 +163,22 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
   const [menu, setMenu] = useState<Menu | null>(null);
   const [pendingRename, setPendingRename] = useState<string>();
   const syncing = useRef(false);
+  const [dropZone, setDropZone] = useState<string | null>(null);
+  const zoneRef = useRef<NodeApi<TreeNode> | null>(null);
+  const rowHovered = useRef(false);
+
+  function setZone(zone: NodeApi<TreeNode> | null) {
+    zoneRef.current = zone;
+    setDropZone(zone?.id ?? null);
+  }
+
+  // Cancelled drags (Esc, dropped outside) clear the zone here; a real drop clears it in onMove.
+  // Not on "drop": this listener is registered before react-dnd's, so it would clear the zone before the drop is handled.
+  useEffect(() => {
+    const clear = () => setZone(null);
+    window.addEventListener("dragend", clear);
+    return () => window.removeEventListener("dragend", clear);
+  }, []);
 
   const [initialOpenState] = useState(() =>
     Object.fromEntries([[SORTOUT_ID, true], ...allFolders(data).map((f) => [f.id, f.expanded])]),
@@ -154,6 +218,13 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
       e.stopPropagation();
       setMenu({ x: e.clientX, y: e.clientY, node });
     },
+    dropZone,
+    hoverDrag: (node) => {
+      rowHovered.current = true;
+      const zone = zoneOf(node);
+      const valid = canDropInto(zone, tree.current?.dragNodes ?? []) ? zone : null;
+      if (valid?.id !== zoneRef.current?.id) setZone(valid);
+    },
   };
 
   async function createFolder(parent: FolderNode | null) {
@@ -191,7 +262,16 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
 
   return (
     <TreeContext.Provider value={ctx}>
-      <div className="tree-box" ref={box.ref} onContextMenu={(e) => ctx.openMenu(e, null)}>
+      <div
+        className="tree-box"
+        ref={box.ref}
+        onContextMenu={(e) => ctx.openMenu(e, null)}
+        onDragOver={() => {
+          // Rows report first (the event bubbles up here); outside any row there is no drop zone.
+          if (!rowHovered.current && zoneRef.current) setZone(null);
+          rowHovered.current = false;
+        }}
+      >
         {box.height > 0 && (
           <Tree<TreeNode>
             ref={(t) => {
@@ -206,14 +286,8 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
             initialOpenState={initialOpenState}
             disableEdit={(d) => d.kind !== "folder"}
             disableDrag={(d) => d.kind === "sortout" || d.kind === "translation"}
-            disableDrop={({ parentNode, dragNodes }) => {
-              const p = parentOf(parentNode);
-              if (p && (p.kind === "mod" || p.kind === "translation")) return true;
-              if (dragNodes.some((n) => n.data.kind === "folder") && p?.kind === "sortout") return true;
-              if (dragNodes.some((n) => n.data.kind === "mod") && p === null) return true;
-              if (p !== null && dragNodes.some((n) => n.data.kind === "folder" && isPredefined(n.data.path))) return true;
-              return false;
-            }}
+            renderCursor={() => null}
+            disableDrop={({ dragNodes }) => !canDropInto(zoneRef.current, dragNodes)}
             onSelect={(nodes) => {
               const d = nodes.length === 1 ? nodes[0].data : undefined;
               if (d && (d.kind === "mod" || d.kind === "translation")) onSelect(d.entry.packageId);
@@ -228,22 +302,16 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
                 onEdit(libraryEdits.renameFolder(node.data.path, name));
               }
             }}
-            onMove={async ({ dragIds, dragNodes, parentNode, index }) => {
-              const parent = parentOf(parentNode);
-              const siblings = parent ? (parent.children ?? []) : data;
-              const dragged = new Set(dragIds);
-              const after = siblings.slice(index).filter((n) => !dragged.has(n.id));
-
+            onMove={async ({ dragNodes }) => {
+              // Where the cursor sits inside the zone does not matter: the view sorts by name.
+              const zone = zoneRef.current?.data;
+              setZone(null);
+              if (!zone || (zone.kind !== "folder" && zone.kind !== "sortout")) return;
               const mods = dragNodes.flatMap((n) => (n.data.kind === "mod" ? [n.data.entry.packageId] : []));
-              if (mods.length && (parent?.kind === "sortout" || parent?.kind === "folder")) {
-                const before = after.find((n) => n.kind === "mod");
-                const to = parent.kind === "folder" ? parent.path : null;
-                await onEdit(libraryEdits.moveMods(mods, to, before && before.kind === "mod" ? before.entry.packageId : null));
-              }
-              const folders = dragNodes.flatMap((n) => (n.data.kind === "folder" ? [n.data] : []));
-              if (folders.length && (parent === null || parent.kind === "folder")) {
-                const before = after.find((n): n is FolderNode => n.kind === "folder");
-                for (const f of folders) await onEdit(libraryEdits.moveFolder(f.path, parent?.path ?? "", before?.name ?? null));
+              if (mods.length) await onEdit(libraryEdits.moveMods(mods, zone.kind === "folder" ? zone.path : null));
+              if (zone.kind !== "folder") return;
+              for (const n of dragNodes) {
+                if (n.data.kind === "folder") await onEdit(libraryEdits.moveFolder(n.data.path, zone.path));
               }
             }}
           >
@@ -258,10 +326,13 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
               <li onClick={() => createFolder(menu.node as FolderNode)}>New subfolder</li>
               <li onClick={() => tree.current?.get(menu.node!.id)?.edit()}>Rename</li>
               <li onClick={() => deleteFolder(menu.node as FolderNode)}>Delete</li>
+              {(menu.node as FolderNode).path.includes("/") && (
+                <li onClick={() => onEdit(libraryEdits.moveFolder((menu.node as FolderNode).path, ""))}>Move to top level</li>
+              )}
             </>
           ) : menu.node?.kind === "mod" ? (
             moveTargets(menu.node).map((t) => (
-              <li key={t.label} onClick={() => onEdit(libraryEdits.moveMods(menuMods(menu.node!), t.to, null))}>
+              <li key={t.label} onClick={() => onEdit(libraryEdits.moveMods(menuMods(menu.node!), t.to))}>
                 Move to {t.label}
               </li>
             ))

@@ -10,6 +10,7 @@
   --select: #2c3440;
   --accent: #2f4a73;
   --drop: #5b8fd9;
+  --drop-zone: #263852;
   --link: #7fb0ff;
   --missing: #6c717a;
   --hidden: #8fa3c9;
@@ -37,14 +38,14 @@ button { cursor: pointer; padding: 2px 8px; }
 button:hover { border-color: var(--muted); }
 input:focus { outline: 1px solid var(--drop); }
 
-.row { display: flex; align-items: center; gap: 6px; height: 100%; padding-right: 8px; cursor: default; white-space: nowrap; border-radius: 3px; }
-.row.selected { background: var(--select); }
-.row.current { background: var(--accent); }
-.row.drop { outline: 2px solid var(--drop); }
-.row.folder, .row.sortout { font-weight: 600; }
-.row.sortout { font-style: italic; }
-.row.missing .name { color: var(--missing); }
-.row.hidden .name { color: var(--hidden); }
+.tree-row { display: flex; align-items: center; gap: 6px; height: 100%; padding-right: 8px; cursor: default; white-space: nowrap; border-radius: 3px; }
+.tree-row.selected { background: var(--select); }
+.tree-row.current { background: var(--accent); }
+.tree-row.drop { background: var(--drop-zone); border-radius: 0; }
+.tree-row.folder, .tree-row.sortout { font-weight: 600; }
+.tree-row.sortout { font-style: italic; }
+.tree-row.missing .name { color: var(--missing); }
+.tree-row.hidden .name { color: var(--hidden); }
 .arrow { width: 12px; flex: none; text-align: center; color: var(--muted); cursor: pointer; }
 .name { overflow: hidden; text-overflow: ellipsis; }
 .rename { font: inherit; padding: 0 2px; }

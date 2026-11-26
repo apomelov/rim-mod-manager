@@ -26,22 +26,19 @@ value class FolderPath(val names: List<String>) {
  */
 object LibraryEdits {
 
-    /** Moves [mods] into the folder [to] (null = Sortout, i.e. out of the tree), before [before] or at the end. */
-    fun moveMods(library: Library, mods: List<PackageId>, to: FolderPath?, before: PackageId? = null): Library {
+    /** Moves [mods] into the folder [to] (null = Sortout, i.e. out of the tree). Stored order is irrelevant: the view sorts. */
+    fun moveMods(library: Library, mods: List<PackageId>, to: FolderPath?): Library {
         if (to != null) requireFolder(library, to, allowRoot = false)
         val moving = mods.distinct()
         val removed = library.copy(folders = removeMods(library.folders, moving.toSet()))
         if (to == null) return removed
         return removed.copy(
-            folders = updateFolder(removed.folders, to) { f ->
-                val at = before?.let { f.mods.indexOf(it) }?.takeIf { it >= 0 } ?: f.mods.size
-                f.copy(mods = f.mods.subList(0, at) + moving + f.mods.subList(at, f.mods.size))
-            },
+            folders = updateFolder(removed.folders, to) { it.copy(mods = it.mods + moving) },
         )
     }
 
-    /** Moves a folder (with its contents) under [toParent], before its sibling [before] or at the end. */
-    fun moveFolder(library: Library, from: FolderPath, toParent: FolderPath, before: String? = null): Library {
+    /** Moves a folder (with its contents) under [toParent]. */
+    fun moveFolder(library: Library, from: FolderPath, toParent: FolderPath): Library {
         val folder = requireFolder(library, from, allowRoot = false)!!
         requireFolder(library, toParent, allowRoot = true)
         if (toParent.isSameOrInside(from)) throw LibraryEditException("Cannot move '$from' into itself")
@@ -51,10 +48,7 @@ object LibraryEdits {
         val without = removeFolder(library.folders, from)
         val siblings = childrenOf(without, toParent)
         if (siblings.any { it.name == folder.name }) throw LibraryEditException("'$toParent' already has a folder named '${folder.name}'")
-        val at = before?.let { b -> siblings.indexOfFirst { it.name == b } }?.takeIf { it >= 0 } ?: siblings.size
-        return library.copy(
-            folders = updateChildren(without, toParent) { it.subList(0, at) + folder + it.subList(at, it.size) },
-        )
+        return library.copy(folders = updateChildren(without, toParent) { it + folder })
     }
 
     /** A top-level folder named like one of [LibraryStore.PREDEFINED_FOLDERS]; it can be reordered but not nested. */

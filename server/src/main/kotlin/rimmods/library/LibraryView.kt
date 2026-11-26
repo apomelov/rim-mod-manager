@@ -28,12 +28,15 @@ data class FolderView(
 
 @Serializable
 data class LibraryView(
-    /** Virtual first folder: mods on disk neither placed in the tree nor shown under an original; sorted by name. */
+    /** Virtual folder, shown last: mods on disk neither placed in the tree nor shown under an original. */
     val sortout: List<ModEntry>,
     val folders: List<FolderView>,
 )
 
-/** Joins the disk scan with the user's library into what the tree UI shows. Pure; writes nothing. */
+/**
+ * Joins the disk scan with the user's library into what the tree UI shows. Pure; writes nothing.
+ * Folders and mods are sorted by name, case-insensitively; the stored order is ignored.
+ */
 object LibrarySync {
     fun view(library: Library, mods: List<Mod>): LibraryView {
         val onDisk = mods.associateBy { it.packageId }
@@ -61,14 +64,15 @@ object LibrarySync {
             hasIcon = onDisk[id]?.icon != null,
         )
 
+        val folderOrder = compareBy<FolderView>({ it.name.lowercase() }, { it.name })
         val placed = mutableSetOf<PackageId>()
         fun folder(f: Folder): FolderView = FolderView(
             name = f.name,
             expanded = f.expanded,
-            folders = f.folders.map(::folder),
-            mods = f.mods.also { placed += it }.filter { it !in shownUnderOriginal }.map { entry(it) },
+            folders = f.folders.map(::folder).sortedWith(folderOrder),
+            mods = f.mods.also { placed += it }.filter { it !in shownUnderOriginal }.map { entry(it) }.sortedWith(byName),
         )
-        val folders = library.folders.map(::folder)
+        val folders = library.folders.map(::folder).sortedWith(folderOrder)
 
         val sortout = onDisk.keys
             .filter { it !in placed && it !in shownUnderOriginal }

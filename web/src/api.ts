@@ -86,8 +86,8 @@ async function edit(command: string, body: object): Promise<LibraryResponse> {
 
 /** Folder paths look like `QoL/base`; the root is "". `to: null` means Sortout. */
 export const libraryEdits = {
-  moveMods: (mods: string[], to: string | null, before: string | null) => edit("move-mods", { mods, to, before }),
-  moveFolder: (from: string, toParent: string, before: string | null) => edit("move-folder", { from, toParent, before }),
+  moveMods: (mods: string[], to: string | null) => edit("move-mods", { mods, to }),
+  moveFolder: (from: string, toParent: string) => edit("move-folder", { from, toParent }),
   createFolder: (parent: string, name: string) => edit("create-folder", { parent, name }),
   renameFolder: (path: string, name: string) => edit("rename-folder", { path, name }),
   deleteFolder: (path: string) => edit("delete-folder", { path }),

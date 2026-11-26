@@ -38,12 +38,12 @@ class LibrarySyncTest {
             listOf(mod("c.mod", "charlie"), mod("a.mod", "Alpha"), mod("b.mod", "bravo")),
         )
         assertEquals(listOf(entry("a.mod", "Alpha"), entry("b.mod", "bravo"), entry("c.mod", "charlie")), view.sortout)
-        assertEquals(LibraryStore.PREDEFINED_FOLDERS, view.folders.map { it.name })
+        assertEquals(listOf("Library", "QoL", "Tools", "UI", "UX"), view.folders.map { it.name })
         assertEquals(true, view.folders.all { it.mods.isEmpty() })
     }
 
     @Test
-    fun `placed mods leave Sortout and keep their stored order and folder structure`() {
+    fun `placed mods leave Sortout and keep their folder structure`() {
         val library = Library(
             folders = listOf(
                 Folder(
@@ -58,8 +58,23 @@ class LibrarySyncTest {
         assertEquals(listOf(entry("new.mod")), view.sortout)
         val qol = view.folders.single()
         assertEquals(true, qol.expanded)
-        assertEquals(listOf(entry("z.mod"), entry("a.mod")), qol.mods)
+        assertEquals(listOf(entry("a.mod"), entry("z.mod")), qol.mods)
         assertEquals(FolderView("base", false, emptyList(), listOf(entry("b.mod"))), qol.folders.single())
+    }
+
+    @Test
+    fun `folders and mods are sorted by name case-insensitively, whatever the stored order`() {
+        val library = Library(
+            folders = listOf(
+                Folder("b", folders = listOf(Folder("Zeta"), Folder("alpha")), mods = ids("m.z", "m.a", "m.b")),
+                Folder("A"),
+            ),
+        )
+        val view = LibrarySync.view(library, listOf(mod("m.z", "zulu"), mod("m.a", "Alpha"), mod("m.b", "alpha")))
+        assertEquals(listOf("A", "b"), view.folders.map { it.name })
+        val b = view.folders[1]
+        assertEquals(listOf("alpha", "Zeta"), b.folders.map { it.name })
+        assertEquals(ids("m.a", "m.b", "m.z"), b.mods.map { it.packageId })
     }
 
     @Test
