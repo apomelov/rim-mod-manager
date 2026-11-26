@@ -29,7 +29,7 @@ Two orthogonal axes: the **tree** answers "what do I have", **builds** answer "w
 | Translation link | Translation mod → the mod(s) it translates | Derived, with user overrides |
 | Dependency | Mod → mods it requires, from About.xml | Disk scan only |
 | Build | Named set of explicitly selected mods (a tab) | User |
-| Unsorted | Inbox folder for mods not yet placed in the tree | Sync |
+| Sortout | Virtual inbox folder: mods on disk that are not placed in the tree (hidden translations excluded) | Computed, never stored |
 
 Rule of thumb: anything derivable from disk is recomputed and never stored; only user decisions are persisted.
 
@@ -51,7 +51,7 @@ Disk is the source of truth about mods; a single user file holds only decisions.
 - Builds: name, explicitly selected mods.
 - Optional per-mod notes.
 
-**Storage:** one human-readable YAML file (YAML so it is easy to edit by hand), loaded whole into memory and saved whole. Location: `~/.config/rimmodmanager/` (respecting `$XDG_CONFIG_HOME`), next to the app settings. Strictly it is data rather than configuration, but keeping everything in one folder makes it easy to find, edit and put under git. Keep it under git for history and undo. A DBMS is overkill at this size (hundreds of records, tens of KB); SQLite is the fallback if complex queries ever appear.
+**Storage:** see `docs/user-files.md` for the exact format. One human-readable YAML file (YAML so it is easy to edit by hand), loaded whole into memory and saved whole. Location: `~/.config/rimmodmanager/` (respecting `$XDG_CONFIG_HOME`), next to the app settings. Strictly it is data rather than configuration, but keeping everything in one folder makes it easy to find, edit and put under git. Keep it under git for history and undo. A DBMS is overkill at this size (hundreds of records, tens of KB); SQLite is the fallback if complex queries ever appear.
 
 **Identity:** packageId is the only key; it is what the game uses in `ModsConfig.xml` and survives resubscribing. The Workshop id from `PublishedFileId.txt` is read as metadata only (e.g. to resolve `?id=…` links when matching translations).
 
@@ -68,8 +68,9 @@ The library is a file-manager-style tree with drag and drop; checkboxes next to 
 - **Folder checkbox is purely derived**: all children checked, some, or none (tri-state). Clicking it checks or unchecks all descendants. It stores nothing itself.
 - **Hidden mods** (translations) are not shown; a "show hidden" toggle reveals them.
 - **Missing mods** (in the tree but not on disk) are shown greyed out.
-- **Unsorted** folder collects new mods until they are placed. On the very first run every mod lands there.
-- **Predefined folders** exist from the start: `Unsorted`, `Library`, `UI`, `UX`, `QoL`, `Tools` (taken from the user's earlier tagging drafts; the rest are created by hand). Libraries are identified by the user placing them there on the first run, not by a heuristic: libraries appear rarely, and there are no builds yet to derive anything from.
+- **Sortout** is a virtual folder, always first: it is computed as every mod on disk not placed in the tree (hidden translations excluded) and is never stored. On the very first run every mod lands there.
+- **Folder contents** are ordered like a file manager: subfolders first, then mods. Folders remember their expanded/collapsed state.
+- **Predefined folders** are created when the library file does not exist yet: `Library`, `UI`, `UX`, `QoL`, `Tools` (taken from the user's earlier tagging drafts; the rest are created by hand). Libraries are identified by the user placing them there on the first run, not by a heuristic: libraries appear rarely, and there are no builds yet to derive anything from.
 
 ## Translations
 
@@ -95,7 +96,7 @@ Builds are tabs over the same tree; switching a tab changes the checkboxes, noth
 
 - **Content:** a build stores only explicitly selected mods. Dependencies, translations and libraries are added at activation, never stored.
 - **Folder state is not stored.** A new mod placed into a folder does not auto-join any build.
-- **New mod into a fully checked folder:** when a mod is dragged from Unsorted into a folder that is fully checked in some builds, ask once: "Add to builds X, Y?"
+- **New mod into a fully checked folder:** when a mod is dragged from Sortout into a folder that is fully checked in some builds, ask once: "Add to builds X, Y?"
 - **Tab actions:** create, duplicate, rename, delete, activate.
 - **Edits save immediately**; duplicate and the activation backup make experiments safe.
 - **Activate** writes the build to the game's mod list (see Export pipeline).
@@ -113,7 +114,7 @@ On every start the disk scan is reconciled with the user file; nothing the user 
 
 | Situation | Action |
 |---|---|
-| Mod on disk, not in tree | Place in Unsorted (or hidden, if it is a translation) |
+| Mod on disk, not in tree | Shows up in Sortout (or hidden, if it is a translation); nothing is written |
 | Mod in tree, not on disk | Keep its place, show greyed out as missing |
 | Missing mod selected in a build | Keep it; warn at activation |
 | Mod updated on disk | Nothing; metadata is reread anyway |
