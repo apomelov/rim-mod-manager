@@ -70,9 +70,9 @@ The library is a file-manager-style tree with drag and drop; checkboxes next to 
 - **Hidden mods** (marked translations) are not shown; a "show hidden" toggle reveals them.
 - **Translations sit under their original**: a marked translation is shown as a child row of each original mod it translates that is on disk, wherever that original is (a folder or Sortout). If none of its originals is on disk, it stays in Sortout. So a translation is always findable (with "show hidden") and can be re-marked.
 - **Missing mods** (in the tree but not on disk) are shown greyed out.
-- **Sortout** is a virtual folder, always first: it is computed as every mod on disk that is neither placed in the tree nor shown under an original, and is never stored. On the very first run every mod lands there.
+- **Sortout** is a virtual folder, always last (below the folders, so that while it is open the folders stay in reach as drop targets): it is computed as every mod on disk that is neither placed in the tree nor shown under an original, and is never stored. On the very first run every mod lands there.
 - **Folder contents** are ordered like a file manager: subfolders first, then mods. Folders remember their expanded/collapsed state.
-- **Predefined folders** are created when the library file does not exist yet: `Library`, `UI`, `UX`, `QoL`, `Tools` (taken from the user's earlier tagging drafts; the rest are created by hand). Libraries are identified by the user placing them there on the first run, not by a heuristic: libraries appear rarely, and there are no builds yet to derive anything from.
+- **Predefined folders** are created when the library file does not exist yet: `Library`, `UI`, `UX`, `QoL`, `Tools` (taken from the user's earlier tagging drafts; the rest are created by hand). They stay at the top level: they can be reordered, renamed or deleted, but not nested into another folder (easy to do by accident when dragging). Libraries are identified by the user placing them there on the first run, not by a heuristic: libraries appear rarely, and there are no builds yet to derive anything from.
 
 ## Mod details panel
 
