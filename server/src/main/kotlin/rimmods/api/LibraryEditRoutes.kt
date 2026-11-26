@@ -1,0 +1,91 @@
+package rimmods.api
+
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingCall
+import io.ktor.server.routing.post
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.Serializable
+import rimmods.Settings
+import rimmods.library.FolderPath
+import rimmods.library.Library
+import rimmods.library.LibraryEdits
+import rimmods.library.LibraryStore
+import rimmods.scan.PackageId
+
+/** Folder paths are `QoL/base`; the root is "". Mod ids are packageIds. */
+@Serializable
+data class MoveModsRequest(val mods: List<String>, val to: String? = null, val before: String? = null)
+
+@Serializable
+data class MoveFolderRequest(val from: String, val toParent: String = "", val before: String? = null)
+
+@Serializable
+data class CreateFolderRequest(val parent: String = "", val name: String)
+
+@Serializable
+data class RenameFolderRequest(val path: String, val name: String)
+
+@Serializable
+data class FolderRequest(val path: String)
+
+@Serializable
+data class ExpandedRequest(val path: String, val expanded: Boolean)
+
+@Serializable
+data class MarkTranslationRequest(val translation: String, val originals: List<String> = emptyList())
+
+@Serializable
+data class UnmarkTranslationRequest(val translation: String)
+
+private val editLock = Mutex()
+
+/** Every edit: load the file, apply, save, answer with the fresh library (no rescan). */
+fun Route.libraryEditRoutes(settings: Settings, state: AppState) {
+    suspend fun RoutingCall.edit(change: (Library) -> Library) {
+        val response = editLock.withLock {
+            val loaded = LibraryStore.load(settings.libraryFile)
+            val changed = change(loaded.library)
+            if (changed != loaded.library) LibraryStore.save(settings.libraryFile, changed)
+            libraryResponse(state, loaded.copy(library = changed))
+        }
+        respond(response)
+    }
+
+    fun ids(list: List<String>) = list.map(PackageId::of)
+
+    post("/api/library/move-mods") {
+        val r = call.receive<MoveModsRequest>()
+        call.edit { LibraryEdits.moveMods(it, ids(r.mods), r.to?.let(FolderPath::parse), r.before?.let(PackageId::of)) }
+    }
+    post("/api/library/move-folder") {
+        val r = call.receive<MoveFolderRequest>()
+        call.edit { LibraryEdits.moveFolder(it, FolderPath.parse(r.from), FolderPath.parse(r.toParent), r.before) }
+    }
+    post("/api/library/create-folder") {
+        val r = call.receive<CreateFolderRequest>()
+        call.edit { LibraryEdits.createFolder(it, FolderPath.parse(r.parent), r.name) }
+    }
+    post("/api/library/rename-folder") {
+        val r = call.receive<RenameFolderRequest>()
+        call.edit { LibraryEdits.renameFolder(it, FolderPath.parse(r.path), r.name) }
+    }
+    post("/api/library/delete-folder") {
+        val r = call.receive<FolderRequest>()
+        call.edit { LibraryEdits.deleteFolder(it, FolderPath.parse(r.path)) }
+    }
+    post("/api/library/expanded") {
+        val r = call.receive<ExpandedRequest>()
+        call.edit { LibraryEdits.setExpanded(it, FolderPath.parse(r.path), r.expanded) }
+    }
+    post("/api/library/mark-translation") {
+        val r = call.receive<MarkTranslationRequest>()
+        call.edit { LibraryEdits.markTranslation(it, PackageId.of(r.translation), ids(r.originals)) }
+    }
+    post("/api/library/unmark-translation") {
+        val r = call.receive<UnmarkTranslationRequest>()
+        call.edit { LibraryEdits.unmarkTranslation(it, PackageId.of(r.translation)) }
+    }
+}
