@@ -17,6 +17,8 @@ Goals:
 - **Builds as first-class objects.** Named mod sets that can be switched, duplicated and activated in one click.
 - **Clean hand-off to the game.** Export writes the mod list; sorting is delegated to RimSort, not reimplemented.
 
+Principle: where the game has a defined behaviour (how it finds a mod's icon, treats packageIds, resolves versions), the app mirrors it.
+
 ## Core concepts
 
 Two orthogonal axes: the **tree** answers "what do I have", **builds** answer "what am I playing now".
