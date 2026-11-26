@@ -2,6 +2,8 @@
 
 Personal mod manager for RimWorld. Requirements: `docs/requirements.md`.
 
+Stack: Kotlin + Ktor backend, React + TypeScript (Vite) frontend, one Gradle project; the full build serves the client from the same server. Linux (Kubuntu).
+
 ## Roles
 
 - **User** — product owner and architect. Decides *what* gets built and the trade-offs: open questions, scope, tech stack, UI taste. Reviews and accepts work.

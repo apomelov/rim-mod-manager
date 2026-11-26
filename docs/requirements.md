@@ -132,6 +132,18 @@ Activate turns a build into the game's mod list in a straight run, then hands so
 
 Sorting logic is not reimplemented: community rules change and are maintained by others.
 
+## Platform and stack
+
+A local web application on Linux (the game runs on Kubuntu).
+
+- **Backend:** Kotlin + Ktor. Spring is overkill for a single-user local tool.
+- **Frontend:** React + TypeScript, built with Vite. A ready-made tree component (e.g. react-arborist) covers drag and drop and checkboxes.
+- **Build:** one Gradle project. The full build bundles the client's artifacts into the server, which serves them as static files alongside the API: one jar plus a run script that starts the server on localhost and opens the browser.
+- **Development:** Vite dev server with hot reload, proxying API calls to Ktor.
+- **Logic placement:** the domain logic (scan, sync, translations, export) lives in Kotlin with JUnit tests; the frontend stays thin.
+
+Why: the user reads Kotlin and TypeScript, not Python; the core UI (a drag-and-drop tree with tri-state checkboxes) is cheapest in React. Compose Desktop was considered (one language, no API layer) but would need the tree written from scratch; a Lanterna TUI loses drag and drop, which is the main interaction when sorting a few hundred mods.
+
 ## Scope
 
 The MVP is tree + checkboxes + builds + export; everything else waits until it has been used for a couple of playthroughs.
@@ -161,6 +173,5 @@ The MVP is tree + checkboxes + builds + export; everything else waits until it h
 - [ ] Missing dependency at export: warn and continue, or block activation?
   *(Doc comment: default proposal is warn and continue, so activation never gets stuck.)*
 - [ ] Same packageId in Workshop and local Mods: which one wins?
-- [ ] Platform: desktop app, local web page, or something else?
 - [ ] Write `ModsConfig.xml` directly, or produce a list for RimSort to import?
 - [ ] Which mods count as libraries to hide: a fixed list, or anything that is only ever a dependency?
