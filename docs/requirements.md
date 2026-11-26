@@ -25,7 +25,7 @@ Two orthogonal axes: the **tree** answers "what do I have", **builds** answer "w
 |---|---|---|
 | Mod | A mod found in the mods folder on disk | Disk scan |
 | Library tree | Folders and subfolders holding mods; the single user-defined ontology | User (drag and drop) |
-| Hidden mod | Translations and libraries (Harmony, HugsLib, etc.); not shown unless "show hidden" is on | Translations: derived, with user overrides. Libraries: user (placed in the Library/Framework folder) |
+| Hidden mod | Translations; not shown unless "show hidden" is on. Libraries are not hidden: they live in an ordinary `Library/Framework` folder | Derived, with user overrides |
 | Translation link | Translation mod → the mod(s) it translates | Derived, with user overrides |
 | Dependency | Mod → mods it requires, from About.xml | Disk scan only |
 | Build | Named set of explicitly selected mods (a tab) | User |
@@ -66,7 +66,7 @@ The library is a file-manager-style tree with drag and drop; checkboxes next to 
 - **Drag and drop** moves mods and folders.
 - **Checkboxes** reflect the build in the current tab. A mod's checkbox is the stored state.
 - **Folder checkbox is purely derived**: all children checked, some, or none (tri-state). Clicking it checks or unchecks all descendants. It stores nothing itself.
-- **Hidden mods** (translations, libraries) are not shown; a "show hidden" toggle reveals them.
+- **Hidden mods** (translations) are not shown; a "show hidden" toggle reveals them.
 - **Missing mods** (in the tree but not on disk) are shown greyed out.
 - **Unsorted** folder collects new mods until they are placed. On the very first run every mod lands there.
 - **Predefined folders** exist from the start, including `Library/Framework`. Libraries are identified by the user placing them there on the first run, not by a heuristic: libraries appear rarely, and there are no builds yet to derive anything from.
@@ -113,7 +113,7 @@ On every start the disk scan is reconciled with the user file; nothing the user 
 
 | Situation | Action |
 |---|---|
-| Mod on disk, not in tree | Place in Unsorted (or hidden, if it is a translation or library) |
+| Mod on disk, not in tree | Place in Unsorted (or hidden, if it is a translation) |
 | Mod in tree, not on disk | Keep its place, show greyed out as missing |
 | Missing mod selected in a build | Keep it; warn at activation |
 | Mod updated on disk | Nothing; metadata is reread anyway |
@@ -182,4 +182,4 @@ The MVP is tree + checkboxes + builds + export; everything else waits until it h
 ## Open questions
 
 
-- [ ] Are mods in `Library/Framework` hidden by default (like translations), or is it a normal visible folder? They join builds automatically as dependencies either way.
+None at the moment.
