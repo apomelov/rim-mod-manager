@@ -104,7 +104,17 @@ function Row({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
     .filter(Boolean)
     .join(" ");
 
-  const onClick = () => {
+  const onClick = (e: MouseEvent) => {
+    if (e.ctrlKey) {
+      // react-arborist toggles a row in the selection only with Meta (Cmd on a Mac); on Linux that is Ctrl.
+      e.stopPropagation();
+      if (node.isSelected) node.deselect();
+      else {
+        node.selectMulti();
+        if (entry) ctx.onSelect(entry.packageId);
+      }
+      return;
+    }
     if (entry) ctx.onSelect(entry.packageId);
     else node.toggle();
   };
