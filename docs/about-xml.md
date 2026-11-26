@@ -63,7 +63,7 @@ Neither image is required; the UI shows a placeholder when one is missing. File 
 - **Preview** (details panel): `About/Preview.png`. About.xml has no field for it.
 - **Icon** (tree rows), first match wins:
   1. `modIconPath` (1.5+): a texture path without extension, relative to a `Textures` folder. Searched as `**/Textures/<path>.png` anywhere inside the mod folder (mods keep textures in `Textures/`, `1.6/Textures/`, `Common/Textures/`, …).
-  2. If not found in the mod itself, the same path in the mod's dependencies' folders *(survey: 15 Vanilla Expanded mods point at `UI/VELogo`, which lives in their framework dependency)*.
+  2. If not found in the mod itself, the same path in its dependencies on disk, transitively, nearest first *(survey: 17 Vanilla Expanded mods point at `UI/VELogo`, which lives in the VE framework; for some it is a dependency of a dependency)*.
   3. `About/ModIcon.png` (loaded automatically by the game since 1.5).
 - Images are resolved during the scan; the API serves only those resolved files, never a path supplied by the client.
 
