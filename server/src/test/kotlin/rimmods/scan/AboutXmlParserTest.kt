@@ -150,12 +150,13 @@ class AboutXmlParserTest {
     }
 
     @Test
-    fun `reads load order and incompatibility lists`() {
+    fun `reads load order and incompatibility lists, forceLoad has no ByVersion variant`() {
         val info = parse(
             """
             <ModMetaData><packageId>a.b</packageId>
               <loadBefore><li>x.before</li></loadBefore>
               <forceLoadAfter><li>x.fafter</li></forceLoadAfter>
+              <forceLoadAfterByVersion><v1.6><li>x.ignored</li></v1.6></forceLoadAfterByVersion>
               <forceLoadBefore><li>x.fbefore</li></forceLoadBefore>
               <incompatibleWith><li>x.incompat</li></incompatibleWith>
             </ModMetaData>

@@ -32,8 +32,9 @@ object AboutXmlParser {
                 ?: emptyList(),
             loadAfter = root.versionedIds("loadAfter", gameVersion),
             loadBefore = root.versionedIds("loadBefore", gameVersion),
-            forceLoadAfter = root.versionedIds("forceLoadAfter", gameVersion),
-            forceLoadBefore = root.versionedIds("forceLoadBefore", gameVersion),
+            // The game has no forceLoad…ByVersion.
+            forceLoadAfter = root.child("forceLoadAfter")?.liTexts()?.map(PackageId::of) ?: emptyList(),
+            forceLoadBefore = root.child("forceLoadBefore")?.liTexts()?.map(PackageId::of) ?: emptyList(),
             incompatibleWith = root.versionedIds("incompatibleWith", gameVersion),
             url = root.childText("url"),
             modVersion = root.childText("modVersion"),

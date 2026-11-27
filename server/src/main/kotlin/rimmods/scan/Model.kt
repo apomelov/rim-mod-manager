@@ -13,6 +13,11 @@ value class PackageId private constructor(val value: String) {
     companion object {
         private const val CORE = "ludeon.rimworld"
         fun of(raw: String): PackageId = PackageId(raw.trim().lowercase())
+
+        /** Core and the DLCs in release order. */
+        val CORE_AND_DLCS: List<PackageId> by lazy {
+            listOf("", ".royalty", ".ideology", ".biotech", ".anomaly", ".odyssey").map { of(CORE + it) }
+        }
     }
 }
 
