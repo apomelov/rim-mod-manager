@@ -6,7 +6,7 @@ Where the wiki is silent, the rules below come from a survey of the user's libra
 ## Location
 
 - Mods folder: one folder per mod, folder name = Workshop id.
-- `<mod>/About/About.xml` — required; a folder without it is not a mod (skip with a warning).
+- `<mod>/About/About.xml` — required; a folder without it is not a mod (skip with a warning). See Errors for leftover folders.
 - `<mod>/About/PublishedFileId.txt` — Workshop id. Optional *(survey: 1 of 189 lacks it)*; fall back to the folder name.
 
 ## Tolerant reading *(survey)*
@@ -76,3 +76,4 @@ Neither image is required; the UI shows a placeholder when one is missing. File 
 
 - Malformed XML or missing `packageId` → the mod is reported in a scan-problems list and skipped; the scan never fails as a whole.
 - Duplicate `packageId` across folders → all copies reported as problems; the scanner keeps the first by folder-name order (the game itself loads only one), so this is a real problem for the user to fix.
+- A folder without About.xml is reported as probably leftovers of a removed mod. Steam deletes only the files it downloaded, so textures generated later stay behind after unsubscribing: RimSort's texture optimisation (todds) writes a `.dds` next to each `.png` *(survey, 2026-11-27: 65 of 189 mods have them)*. If the folder holds at least one file and only `.dds` files (no symlinks), the problem says so and the UI offers to delete the folder, after a confirmation; the server re-checks the folder right before deleting. This is the only write the app makes to the mods folder, and only on an explicit click.

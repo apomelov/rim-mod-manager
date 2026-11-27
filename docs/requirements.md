@@ -124,6 +124,7 @@ On every start the disk scan is reconciled with the user file; nothing the user 
 | Missing mod selected in a build | Keep it; warn at activation |
 | Mod updated on disk | Nothing; metadata is reread anyway |
 | New translation appears | Lands in Sortout like any new mod until marked |
+| Folder without About.xml (e.g. only `.dds` textures left after unsubscribing) | Reported as leftovers; a textures-only folder can be deleted from the UI after a confirmation (see `docs/about-xml.md`, Errors) |
 
 A separate "Remove missing" action cleans up missing mods deliberately; mods are often unsubscribed and resubscribed, so their tree position should survive.
 
