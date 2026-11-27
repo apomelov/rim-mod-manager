@@ -41,7 +41,7 @@ Disk is the source of truth about mods; a single user file holds only decisions.
 
 **From disk (rescanned on every start, never persisted):**
 
-- One mods folder: the Steam Workshop content folder (path set in the app's configuration). The local `Mods` folder is not used.
+- Two mods folders, both optional: the Steam Workshop content folder and the game's local `Mods` folder (manual installs, GOG copies without Workshop). A packageId found in both: the local copy is used, as the game does, and the duplicate is reported.
 - Per mod: `About/About.xml` (packageId, name, description, author, modDependencies, loadAfter/loadBefore, supported versions) and `About/PublishedFileId.txt` (Workshop id).
 - Scanning a few hundred mods is fast enough that no cache is needed.
 
@@ -52,11 +52,11 @@ Disk is the source of truth about mods; a single user file holds only decisions.
 - Builds: name, explicitly selected mods.
 - Optional per-mod notes.
 
-**Storage:** see `docs/user-files.md` for the exact format. One human-readable YAML file (YAML so it is easy to edit by hand), loaded whole into memory and saved whole. Location: `~/.config/rimmodmanager/` (respecting `$XDG_CONFIG_HOME`), next to the app settings. Strictly it is data rather than configuration, but keeping everything in one folder makes it easy to find, edit and put under git. Keep it under git for history and undo. A DBMS is overkill at this size (hundreds of records, tens of KB); SQLite is the fallback if complex queries ever appear.
+**Storage:** see `docs/user-files.md` for the exact format. One human-readable YAML file (YAML so it is easy to edit by hand), loaded whole into memory and saved whole. Location: by default next to the app settings in the app's config folder (Linux `$XDG_CONFIG_HOME/rimmodmanager`, default `~/.config/rimmodmanager`; Windows `%APPDATA%\rimmodmanager`; macOS `~/Library/Application Support/rimmodmanager`). Its path is a setting of its own, so the library can live in a git repository or a synced folder and be shared between machines, while `settings.yaml` (this machine's paths) and the `ModsConfig.xml` backups stay local. Keep it under git for history and undo. A DBMS is overkill at this size (hundreds of records, tens of KB); SQLite is the fallback if complex queries ever appear.
 
 **Identity:** packageId is the only key; it is what the game uses in `ModsConfig.xml` and survives resubscribing. The Workshop id from `PublishedFileId.txt` is read as metadata only (e.g. to resolve `?id=…` links when matching translations).
 
-**Configuration:** paths are app settings, not hard-coded: the mods folder (Workshop content) and the game's mod list file `ModsConfig.xml` (on Linux usually under `~/.config/unity3d/Ludeon Studios/RimWorld by Ludeon Studios/Config/`).
+**Configuration:** paths are app settings, not hard-coded: the game folder, the game's config folder (holding `ModsConfig.xml`), the Workshop mods folder, the local mods folder and the library file. Without `settings.yaml` the app opens a welcome page: it shows the paths it detected (the way RimSort does, per OS), with a check of each, lets the user correct them, and saves them.
 
 ## Library tree UI
 
@@ -158,7 +158,7 @@ Core and the DLCs (`ludeon.rimworld`, `ludeon.rimworld.royalty`, `ludeon.rimworl
 
 ## Platform and stack
 
-A local web application on Linux (the game runs on Kubuntu).
+A local web application for Linux, Windows and macOS (the author plays on Kubuntu; Windows and macOS are supported but not tested by the author).
 
 - **Backend:** Kotlin + Ktor. Spring is overkill for a single-user local tool.
 - **Frontend:** React + TypeScript, built with Vite. A ready-made tree component (e.g. react-arborist) covers drag and drop and checkboxes.
