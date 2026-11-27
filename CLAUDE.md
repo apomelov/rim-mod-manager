@@ -25,6 +25,7 @@ Stack: Kotlin + Ktor backend, React + TypeScript (Vite) frontend, one Gradle pro
    - **Docs** (`docs/`, `CLAUDE.md`): commit without asking, in a separate docs-only commit, as soon as an agreed decision has been documented.
    - **Code**: commit only when the user says so. Offer a commit as soon as a step is verified, so changes do not pile up.
    - **Size**: small commits; a good commit is one its first line fully describes.
+   - **Messages**: about the change only. No `Co-Authored-By`, session links or other trailers.
 
 ## Permissions
 
