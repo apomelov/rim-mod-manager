@@ -162,7 +162,7 @@ A local web application for Linux, Windows and macOS (the author plays on Kubunt
 
 - **Backend:** Kotlin + Ktor. Spring is overkill for a single-user local tool.
 - **Frontend:** React + TypeScript, built with Vite. A ready-made tree component (e.g. react-arborist) covers drag and drop and checkboxes.
-- **Build:** one Gradle project. The full build bundles the client's artifacts into the server, which serves them as static files alongside the API: one jar plus a run script that starts the server on localhost and opens the browser.
+- **Build:** one Gradle project. The full build bundles the client's artifacts into the server, which serves them as static files alongside the API: one jar plus a run script (`run.sh` on Linux and macOS, `run.cmd` on Windows) that starts the server on localhost and opens the browser.
 - **Development:** Vite dev server with hot reload, proxying API calls to Ktor.
 - **Logic placement:** the domain logic (scan, sync, translations, export) lives in Kotlin with JUnit tests; the frontend stays thin.
 

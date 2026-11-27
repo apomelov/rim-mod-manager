@@ -15,7 +15,7 @@ Where the game, its config and the mods live on Linux, Windows and macOS, and ho
 
 Old keys are still read: `modsDir` → `workshopDir`, `modsConfigFile` → its folder as `gameConfigDir`.
 
-**App config folder** (`settings.yaml`, default `library.yaml`, `backups/`): Linux `$XDG_CONFIG_HOME/rimmodmanager` (default `~/.config/rimmodmanager`), Windows `%APPDATA%\rimmodmanager`, macOS `~/Library/Application Support/rimmodmanager`. `-Drmm.configDir` overrides it.
+**App config folder** (`settings.yaml`, default `library.yaml`, `backups/`): Linux `$XDG_CONFIG_HOME/rimmodmanager` (default `~/.config/rimmodmanager`), Windows `%APPDATA%\rimmodmanager`, macOS `~/Library/Application Support/rimmodmanager`. `-Drmm.configDir` overrides it, and `-Drmm.port` the port (both for development, e.g. a second copy on a scratch config).
 
 ## Checks (shown on the welcome page)
 
