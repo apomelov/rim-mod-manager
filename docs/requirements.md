@@ -93,7 +93,7 @@ A mod is a translation only once the user marks it as one; until then it sits in
 - A translation of a mod not in the collection keeps the target id rather than losing it.
 - A marked translation is hidden: it is shown only with "show hidden", under its original(s) (see Library tree UI).
 
-**Finding translations in Sortout (later):** a helper that reads names, descriptions and Workshop links (`?id=…`, the strongest evidence; links to known libraries ignored) and *suggests* marks for mods still in Sortout. It classifies by reading descriptions, not by keyword heuristics like "RU" or "Rus". Suggestions are reviewed by the user, never applied silently.
+**Finding translations in Sortout:** a helper that *suggests* marks for mods still in Sortout, from the mods' files rather than their descriptions: a translation ships a non-English language and usually no content of its own, and the keys it translates are the ones its original defines. Suggestions are shown in a dialog (originals left, translations right, matched pairs first); each can be confirmed (written as a mark) or dismissed. Never applied silently. Details: `docs/translations.md`.
 
 Why manual first: the mark must be correct and always reconfigurable; automation only saves typing and can come once the basics are in use.
 
@@ -182,7 +182,6 @@ The MVP is tree + checkboxes + builds + export; everything else waits until it h
 
 **Later:**
 
-- Finding translations in Sortout (suggested marks).
 - Reverse detection with diffs.
 - Build export/import for multiplayer.
 - Per-mod notes.
