@@ -104,7 +104,7 @@ Builds are tabs over the same tree; switching a tab changes the checkboxes, noth
 
 - **Content:** a build stores only explicitly selected mods. Dependencies, translations and libraries are added at activation, never stored.
 - **Folder state is not stored.** A new mod placed into a folder does not auto-join any build.
-- **New mod into a fully checked folder:** when a mod is dragged from Sortout into a folder that is fully checked in some builds, ask once: "Add to builds X, Y?"
+- **New mod into a fully checked folder:** nothing happens; the mod is not selected and the folder simply becomes partly checked. No "add to builds?" prompt: the folder checkbox is purely derived, and a prompt on every move would get in the way while sorting.
 - **Tab actions:** create, duplicate, rename, delete, activate.
 - **Edits save immediately**; duplicate and the activation backup make experiments safe.
 - **Activate** writes the build to the game's mod list (see Export pipeline).
