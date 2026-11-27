@@ -28,7 +28,7 @@ Where the wiki is silent, the rules below come from a survey of the user's libra
 | `supportedVersions` | list of `<li>` (`1.6`) | Shown in UI; not used for blocking. |
 | `modDependencies` | list of `<li>` items | See below. |
 | `modDependenciesByVersion` | `<vX.Y>` → list of items | Overrides `modDependencies` for that version. |
-| `loadAfter`, `loadBefore`, `forceLoadAfter`, `forceLoadBefore` (+ `…ByVersion`) | list of `<li>` packageIds | Input for the activation sort (see requirements, Export pipeline). |
+| `loadAfter`, `loadBefore` (+ `…ByVersion`), `forceLoadAfter`, `forceLoadBefore` (no `ByVersion` in the game) | list of `<li>` packageIds | Input for the activation sort (see requirements, Export pipeline). |
 | `incompatibleWith` (+ `ByVersion`) | list of `<li>` packageIds | Metadata; may be shown as a warning later. |
 | `url` | text | Optional link. |
 | `modVersion` | text | The mod's own version (1.4+); shown in the details panel. |
