@@ -72,6 +72,7 @@ export function BuildTabs({ builds, current, onEdit, nameOf }: Props) {
           )}
         </div>
       ))}
+      {builds.length === 0 && <span className="tabs-hint">Start your first build here →</span>}
       <div className="tab add" role="tab" title="New build" onClick={create}>
         +
       </div>

@@ -58,3 +58,4 @@ button.small { padding: 0 4px; font-size: 0.8em; }
 .check { margin: 0; flex: none; }
 .check-space { width: 13px; flex: none; }
 .menu li.disabled { color: var(--muted); cursor: default; }
+.tabs-hint { align-self: center; padding: 0 8px; color: var(--muted); font-style: italic; }
