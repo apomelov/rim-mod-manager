@@ -74,11 +74,30 @@ object LibraryEdits {
         return library.copy(folders = updateFolder(library.folders, path) { it.copy(name = clean) })
     }
 
-    /** Deletes a folder and its subfolders; their mods go back to Sortout. */
+    /**
+     * Deletes a folder. A top-level folder takes its whole subtree with it, so its mods go back to Sortout. A nested
+     * folder's mods and subfolders move up into its parent; a subfolder named like one already there is merged into it.
+     */
     fun deleteFolder(library: Library, path: FolderPath): Library {
-        requireFolder(library, path, allowRoot = false)
-        return library.copy(folders = removeFolder(library.folders, path))
+        val folder = requireFolder(library, path, allowRoot = false)!!
+        val without = library.copy(folders = removeFolder(library.folders, path))
+        if (path.parent.isRoot) return without
+        return without.copy(
+            folders = updateFolder(without.folders, path.parent) { parent ->
+                parent.copy(mods = parent.mods + folder.mods, folders = merge(parent.folders, folder.folders))
+            },
+        )
     }
+
+    private fun merge(into: List<Folder>, incoming: List<Folder>): List<Folder> =
+        incoming.fold(into) { acc, f ->
+            val i = acc.indexOfFirst { it.name == f.name }
+            if (i < 0) {
+                acc + f
+            } else {
+                acc.toMutableList().also { it[i] = it[i].copy(mods = it[i].mods + f.mods, folders = merge(it[i].folders, f.folders)) }
+            }
+        }
 
     fun setExpanded(library: Library, path: FolderPath, expanded: Boolean): Library {
         requireFolder(library, path, allowRoot = false)

@@ -288,7 +288,9 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit, buil
   }
 
   async function deleteFolder(f: FolderNode) {
-    const what = f.count > 0 ? ` Its ${f.count} mod(s) go back to Sortout.` : "";
+    const parent = f.path.includes("/") ? f.path.slice(0, f.path.lastIndexOf("/")) : null;
+    const what =
+      f.count === 0 ? "" : parent ? ` Its contents move up into “${parent}”.` : ` Its ${f.count} mod(s) go back to Sortout.`;
     const ok = await confirm({ title: "Delete folder", message: <>Delete folder “{f.path}”?{what}</>, confirm: "Delete", danger: true });
     if (ok) await onEdit(libraryEdits.deleteFolder(f.path));
   }

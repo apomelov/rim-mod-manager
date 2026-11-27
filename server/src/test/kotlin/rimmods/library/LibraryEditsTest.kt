@@ -130,10 +130,31 @@ class LibraryEditsTest {
     }
 
     @Test
-    fun `delete removes the subtree and its mods return to Sortout`() {
+    fun `deleting a top-level folder sends its whole subtree's mods to Sortout`() {
         val r = LibraryEdits.deleteFolder(lib, path("QoL"))
         assertEquals(listOf("UI"), r.folders.map { it.name })
         assertFailsWith<LibraryEditException> { LibraryEdits.deleteFolder(lib, path("Nope")) }
+    }
+
+    @Test
+    fun `deleting a nested folder moves its mods and subfolders up into the parent`() {
+        val l = LibraryEdits.createFolder(lib, path("QoL/base"), "deep")
+            .let { LibraryEdits.moveMods(it, ids("d.one"), path("QoL/base/deep")) }
+        val r = LibraryEdits.deleteFolder(l, path("QoL/base"))
+        val qol = r.folder("QoL")
+        assertEquals(listOf("other", "deep"), qol.folders.map { it.name })
+        assertEquals(ids("q.one", "q.two", "q.three", "b.one", "b.two"), qol.mods)
+        assertEquals(ids("d.one"), r.folder("QoL/deep").mods)
+    }
+
+    @Test
+    fun `a subfolder named like one in the parent is merged into it`() {
+        val l = LibraryEdits.createFolder(lib, path("QoL/base"), "other")
+            .let { LibraryEdits.moveMods(it, ids("o.one"), path("QoL/base/other")) }
+            .let { LibraryEdits.moveMods(it, ids("o.two"), path("QoL/other")) }
+        val r = LibraryEdits.deleteFolder(l, path("QoL/base"))
+        assertEquals(listOf("other"), r.folder("QoL").folders.map { it.name })
+        assertEquals(ids("o.two", "o.one"), r.folder("QoL/other").mods)
     }
 
     @Test
