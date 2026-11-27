@@ -67,6 +67,10 @@ Neither image is required; the UI shows a placeholder when one is missing. File 
   3. `About/ModIcon.png` (loaded automatically by the game since 1.5).
 - Images are resolved during the scan; the API serves only those resolved files, never a path supplied by the client.
 
+## Languages
+
+A mod's languages are the folder names inside any `Languages` folder in it: at the root or in a load folder (`Common/`, `1.6/`, conditional ones like `Biotech/`, nested up to two levels). Version folders (`1.5`, `v1.5`) count only for the game version; LoadFolders.xml is not read, so this approximates the game's load folders. Names are normalised: the native-name suffix is dropped (`Russian (Русский)` → `Russian`) and known aliases are mapped (`TraditionalChinese` → `ChineseTraditional`, `PortugueseBrazil` → `PortugueseBrazilian`, `KoreanFastChannel` → `Korean`). *(survey, 2026-11-27: 150 of 187 mods have Languages; root 122, version folders, `Common/`, conditional subfolders.)*
+
 ## Core and DLCs
 
 - Ids starting with `ludeon.rimworld` are Core/DLCs (see requirements, "Core and DLCs"). They are never looked up in the mods folder.
