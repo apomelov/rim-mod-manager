@@ -17,6 +17,8 @@ export interface FolderView {
 export interface LibraryView {
   sortout: ModEntry[];
   folders: FolderView[];
+  /** Core and the DLCs found in the game folder, in release order. */
+  game?: ModEntry[];
 }
 
 export interface LibraryResponse {
@@ -126,3 +128,44 @@ export const buildEdits = {
   setCurrent: (name: string) => post("/api/builds/current", { name }),
   select: (build: string, mods: string[], selected: boolean) => post("/api/builds/select", { build, mods, selected }),
 };
+
+export interface ActivationPlan {
+  /** The sorted list to write; empty when blocked. */
+  order: string[];
+  selected: string[];
+  dependencies: string[];
+  translations: string[];
+  dlcs: string[];
+  missingSelected: string[];
+  missingDependencies: { dependency: Dependency; requiredBy: string[] }[];
+  cycle: string[];
+}
+
+export interface ActivationPreview {
+  build: string;
+  plan: ActivationPlan;
+  blocked: boolean;
+}
+
+export interface ActivationResult {
+  build: string;
+  written: number;
+  file: string;
+  backup: string;
+}
+
+export async function fetchActivation(build: string): Promise<ActivationPreview> {
+  const res = await fetch(`/api/builds/activation?build=${encodeURIComponent(build)}`);
+  if (!res.ok) throw await errorOf(res, "activation preview");
+  return res.json();
+}
+
+export async function activate(build: string): Promise<ActivationResult> {
+  const res = await fetch("/api/builds/activate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ build }),
+  });
+  if (!res.ok) throw await errorOf(res, "activate");
+  return res.json();
+}

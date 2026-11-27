@@ -5,7 +5,11 @@ export type TreeNode =
   | { id: "sortout"; kind: "sortout"; name: string; count: number; children: TreeNode[] }
   | { id: string; kind: "folder"; name: string; path: string; expanded: boolean; count: number; children: TreeNode[] }
   | { id: string; kind: "mod"; name: string; entry: ModEntry; children: TreeNode[] | null }
-  | { id: string; kind: "translation"; name: string; entry: ModEntry; children: null };
+  | { id: string; kind: "translation"; name: string; entry: ModEntry; children: null }
+  /** Core or a DLC: shown first, not movable; Core is always on. */
+  | { id: string; kind: "game"; name: string; entry: ModEntry; core: boolean; children: null };
+
+export const CORE_ID = "ludeon.rimworld";
 
 export const SORTOUT_ID = "sortout";
 
@@ -45,6 +49,9 @@ function folderNode(f: FolderView, parent: string, showHidden: boolean): TreeNod
 export function buildTree(view: LibraryView, showHidden: boolean): TreeNode[] {
   const sortout = mods(view.sortout, showHidden);
   return [
+    ...(view.game ?? []).map(
+      (g): TreeNode => ({ id: `g:${g.packageId}`, kind: "game", name: g.name, entry: g, core: g.packageId === CORE_ID, children: null }),
+    ),
     ...view.folders.map((f) => folderNode(f, "", showHidden)),
     { id: SORTOUT_ID, kind: "sortout", name: "Sortout", count: sortout.length, children: sortout },
   ];

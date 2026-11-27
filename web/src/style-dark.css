@@ -84,3 +84,14 @@ button.small { padding: 0 4px; font-size: 0.8em; }
 .check-space { width: 13px; flex: none; }
 .menu li.disabled { color: var(--muted); cursor: default; }
 .menu li.disabled:hover { background: none; }
+
+.overlay { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.55); display: grid; place-items: center; }
+.dialog { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow-y: auto; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; box-shadow: 0 8px 32px rgba(0,0,0,.6); }
+.dialog h2 { margin: 0 0 12px; font-size: 1.2em; }
+.dialog h3 { margin: 12px 0 4px; font-size: 1em; }
+.dialog ul { margin: 0; padding-left: 18px; }
+.dialog .warning { color: #e8c46a; }
+.dialog .buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+button.primary { background: var(--accent); border-color: var(--drop); }
+button:disabled { opacity: .5; cursor: default; }
+code { font-size: .9em; overflow-wrap: anywhere; }

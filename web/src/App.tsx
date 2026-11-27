@@ -17,6 +17,10 @@ export function App() {
   }, []);
 
   const mods = useMemo(() => (data ? allMods(data.library) : []), [data]);
+  const nameOf = useMemo(() => {
+    const names = new Map([...mods, ...(data?.library.game ?? [])].map((m) => [m.packageId, m.name]));
+    return (id: string) => names.get(id) ?? id;
+  }, [mods, data]);
 
   const onEdit = async (edit: Promise<LibraryResponse>) => {
     try {
@@ -73,7 +77,7 @@ export function App() {
             ))}
           </ul>
         )}
-        <BuildTabs builds={data.builds} current={data.currentBuild} onEdit={onEdit} />
+        <BuildTabs builds={data.builds} current={data.currentBuild} onEdit={onEdit} nameOf={nameOf} />
         <LibraryTree
           view={data.library}
           showHidden={showHidden}

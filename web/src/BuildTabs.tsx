@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { buildEdits, type Build, type LibraryResponse } from "./api";
+import { ActivateDialog } from "./ActivateDialog";
 import { ContextMenu } from "./Menu";
 import { freshName } from "./treeData";
 
@@ -7,10 +8,13 @@ interface Props {
   builds: Build[];
   current?: string;
   onEdit: (edit: Promise<LibraryResponse>) => Promise<boolean>;
+  nameOf: (packageId: string) => string;
 }
 
 /** Browser-like tabs, one per build; the last tab, "+", creates a new build. */
-export function BuildTabs({ builds, current, onEdit }: Props) {
+export function BuildTabs({ builds, current, onEdit, nameOf }: Props) {
+  const [activating, setActivating] = useState<string>();
+  const closeActivate = useCallback(() => setActivating(undefined), []);
   const [menu, setMenu] = useState<{ x: number; y: number; build: string } | null>(null);
   const [renaming, setRenaming] = useState<string>();
   const closeMenu = useCallback(() => setMenu(null), []);
@@ -76,11 +80,10 @@ export function BuildTabs({ builds, current, onEdit }: Props) {
           <li onClick={() => setRenaming(menu.build)}>Rename</li>
           <li onClick={() => onEdit(buildEdits.duplicate(menu.build))}>Duplicate</li>
           <li onClick={() => remove(menu.build)}>Delete</li>
-          <li className="disabled" title="Comes with the export step" onClick={(e) => e.stopPropagation()}>
-            Activate
-          </li>
+          <li onClick={() => setActivating(menu.build)}>Activate…</li>
         </ContextMenu>
       )}
+      {activating && <ActivateDialog build={activating} nameOf={nameOf} onClose={closeActivate} />}
     </div>
   );
 }

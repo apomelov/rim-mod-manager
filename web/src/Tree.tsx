@@ -41,7 +41,10 @@ function checkableMods(node: TreeNode): string[] {
 function Checkbox({ node }: { node: TreeNode }) {
   const { checked, check } = useContext(TreeContext);
   if (!checked) return null;
-  const mods = node.kind === "sortout" ? [] : checkableMods(node);
+  if (node.kind === "game" && node.core) {
+    return <input type="checkbox" className="check" checked disabled title="Core is always loaded" />;
+  }
+  const mods = node.kind === "sortout" ? [] : node.kind === "game" ? [node.entry.packageId] : checkableMods(node);
   if (mods.length === 0 || node.kind === "translation") return <span className="check-space" />;
   const on = mods.filter((m) => checked.has(m)).length;
   const all = on === mods.length;
@@ -126,7 +129,7 @@ function EditInput({ node }: { node: NodeApi<TreeNode> }) {
 function Row({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
   const ctx = useContext(TreeContext);
   const d = node.data;
-  const entry = d.kind === "mod" || d.kind === "translation" ? d.entry : undefined;
+  const entry = d.kind === "mod" || d.kind === "translation" || d.kind === "game" ? d.entry : undefined;
   const classes = [
     "tree-row", // not "row": react-arborist gives its drag preview container that class
     d.kind,
@@ -261,6 +264,7 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit, buil
     openMenu: (e, node) => {
       e.preventDefault();
       e.stopPropagation();
+      if (node?.kind === "game" || node?.kind === "translation") return setMenu(null); // nothing to do with them
       setMenu({ x: e.clientX, y: e.clientY, node });
     },
     dropZone,
@@ -330,12 +334,12 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit, buil
             openByDefault={false}
             initialOpenState={initialOpenState}
             disableEdit={(d) => d.kind !== "folder"}
-            disableDrag={(d) => d.kind === "sortout" || d.kind === "translation"}
+            disableDrag={(d) => d.kind === "sortout" || d.kind === "translation" || d.kind === "game"}
             renderCursor={() => null}
             disableDrop={({ dragNodes }) => !canDropInto(zoneRef.current, dragNodes)}
             onSelect={(nodes) => {
               const d = nodes.length === 1 ? nodes[0].data : undefined;
-              if (d && (d.kind === "mod" || d.kind === "translation")) onSelect(d.entry.packageId);
+              if (d && (d.kind === "mod" || d.kind === "translation" || d.kind === "game")) onSelect(d.entry.packageId);
             }}
             onToggle={(id) => {
               if (syncing.current || !id.startsWith("f:")) return;
