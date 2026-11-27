@@ -43,6 +43,7 @@ object LibraryStore {
                 .map { (k, v) -> PackageId.of(k) to v.orEmpty().map(PackageId::of).distinct() }
                 .toMap(),
             builds = dto.builds.map { Build(it.name, it.mods.map(PackageId::of).distinct()) },
+            currentBuild = dto.currentBuild,
         )
         locations.filterValues { it.size > 1 }.forEach { (id, where) ->
             problems += "Mod '$id' is listed in several folders; kept in '${where.first()}', ignored in ${where.drop(1).joinToString { "'$it'" }}"
@@ -94,12 +95,14 @@ private data class LibraryDto(
     val folders: List<FolderDto> = emptyList(),
     val translations: Map<String, List<String>?> = emptyMap(),
     val builds: List<BuildDto> = emptyList(),
+    val currentBuild: String? = null,
 ) {
     companion object {
         fun of(l: Library) = LibraryDto(
             folders = l.folders.map(FolderDto::of),
             translations = l.translations.map { (k, v) -> k.value to v.map { it.value } }.toMap(),
             builds = l.builds.map { b -> BuildDto(b.name, b.mods.map { it.value }) },
+            currentBuild = l.currentBuild,
         )
     }
 }

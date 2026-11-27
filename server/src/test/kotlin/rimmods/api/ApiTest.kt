@@ -106,4 +106,29 @@ class ApiTest {
         assertFalse(settings.modsDir.resolve("3").exists())
         assertEquals(emptyList(), json.decodeFromString<LibraryResponse>(r.bodyAsText()).problems)
     }
+
+    @Test
+    fun `build tabs - create, select mods, duplicate, switch`() = testApplication {
+        val settings = settings()
+        application { module(settings) }
+
+        suspend fun post(path: String, body: String): LibraryResponse {
+            val r = client.post(path) {
+                contentType(ContentType.Application.Json)
+                setBody(body)
+            }
+            assertEquals(HttpStatusCode.OK, r.status, r.bodyAsText())
+            return json.decodeFromString(r.bodyAsText())
+        }
+
+        post("/api/builds/create", """{"name":"Solo"}""")
+        post("/api/builds/select", """{"build":"Solo","mods":["A.Mod"],"selected":true}""")
+        val dup = post("/api/builds/duplicate", """{"name":"Solo"}""")
+        assertEquals(listOf(BuildView("Solo", listOf("a.mod")), BuildView("Solo copy", listOf("a.mod"))), dup.builds)
+        assertEquals("Solo copy", dup.currentBuild)
+
+        val switched = post("/api/builds/current", """{"name":"Solo"}""")
+        assertEquals("Solo", switched.currentBuild)
+        assertTrue("currentBuild: Solo" in settings.libraryFile.readText())
+    }
 }

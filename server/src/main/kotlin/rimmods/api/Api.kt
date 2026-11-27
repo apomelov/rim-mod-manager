@@ -25,6 +25,7 @@ import rimmods.library.LibraryView
 import rimmods.scan.GameVersion
 import rimmods.scan.Mod
 import rimmods.scan.PackageId
+import rimmods.library.BuildEdits
 import rimmods.scan.Leftovers
 import rimmods.scan.LeftoverException
 import rimmods.scan.ScanProblem
@@ -41,7 +42,13 @@ data class LibraryResponse(
     val translations: Map<String, List<String>>,
     /** Scan problems and library-file problems. */
     val problems: List<Problem>,
+    val builds: List<BuildView> = emptyList(),
+    /** The open tab (resolved: an unknown stored name falls back to the first build); null when there are no builds. */
+    val currentBuild: String? = null,
 )
+
+@Serializable
+data class BuildView(val name: String, val mods: List<String>)
 
 @Serializable
 data class Problem(
@@ -106,6 +113,8 @@ fun libraryResponse(state: AppState, loaded: LoadedLibrary): LibraryResponse {
         problems = s.scan.problems.map {
             Problem("${it.folder}: ${it.message}", removableFolder = if (it.texturesOnly) File(it.folder).name else null)
         } + loaded.problems.map { Problem(it) },
+        builds = loaded.library.builds.map { b -> BuildView(b.name, b.mods.map { it.value }) },
+        currentBuild = BuildEdits.current(loaded.library)?.name,
     )
 }
 

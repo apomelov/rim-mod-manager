@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import rimmods.Settings
+import rimmods.library.BuildEdits
 import rimmods.library.FolderPath
 import rimmods.library.Library
 import rimmods.library.LibraryEdits
@@ -39,6 +40,15 @@ data class MarkTranslationRequest(val translation: String, val originals: List<S
 
 @Serializable
 data class UnmarkTranslationRequest(val translation: String)
+
+@Serializable
+data class BuildRequest(val name: String)
+
+@Serializable
+data class RenameBuildRequest(val name: String, val newName: String)
+
+@Serializable
+data class SelectModsRequest(val build: String, val mods: List<String>, val selected: Boolean)
 
 private val editLock = Mutex()
 
@@ -87,5 +97,30 @@ fun Route.libraryEditRoutes(settings: Settings, state: AppState) {
     post("/api/library/unmark-translation") {
         val r = call.receive<UnmarkTranslationRequest>()
         call.edit { LibraryEdits.unmarkTranslation(it, PackageId.of(r.translation)) }
+    }
+
+    post("/api/builds/create") {
+        val r = call.receive<BuildRequest>()
+        call.edit { BuildEdits.create(it, r.name) }
+    }
+    post("/api/builds/rename") {
+        val r = call.receive<RenameBuildRequest>()
+        call.edit { BuildEdits.rename(it, r.name, r.newName) }
+    }
+    post("/api/builds/duplicate") {
+        val r = call.receive<BuildRequest>()
+        call.edit { BuildEdits.duplicate(it, r.name) }
+    }
+    post("/api/builds/delete") {
+        val r = call.receive<BuildRequest>()
+        call.edit { BuildEdits.delete(it, r.name) }
+    }
+    post("/api/builds/current") {
+        val r = call.receive<BuildRequest>()
+        call.edit { BuildEdits.setCurrent(it, r.name) }
+    }
+    post("/api/builds/select") {
+        val r = call.receive<SelectModsRequest>()
+        call.edit { BuildEdits.select(it, r.build, ids(r.mods), r.selected) }
     }
 }

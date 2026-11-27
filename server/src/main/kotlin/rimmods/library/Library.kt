@@ -8,6 +8,8 @@ data class Library(
     /** Mods marked as translations → the mods they translate. */
     val translations: Map<PackageId, List<PackageId>> = emptyMap(),
     val builds: List<Build> = emptyList(),
+    /** The open build tab; null or unknown means the first build (see [BuildEdits.current]). */
+    val currentBuild: String? = null,
 )
 
 data class Folder(

@@ -42,6 +42,7 @@ class LibraryStoreTest {
             builds:
               - name: Solo
                 mods: [some.author.mod, another.mod]
+            currentBuild: Solo
             """.trimIndent(),
         )
         assertEquals(emptyList(), loaded.problems)
@@ -54,6 +55,7 @@ class LibraryStoreTest {
         assertEquals(Folder("Library"), lib.folders[1])
         assertEquals(mapOf(PackageId.of("some.mod.ru") to ids("original.mod")), lib.translations)
         assertEquals(listOf(Build("Solo", ids("some.author.mod", "another.mod"))), lib.builds)
+        assertEquals("Solo", lib.currentBuild)
     }
 
     @Test
@@ -119,6 +121,7 @@ class LibraryStoreTest {
             ),
             translations = mapOf(PackageId.of("t.ru") to ids("a.one", "a.two"), PackageId.of("t2.ru") to emptyList()),
             builds = listOf(Build("Solo", ids("a.one"))),
+            currentBuild = "Solo",
         )
         assertEquals(LoadedLibrary(lib, emptyList()), LibraryStore.parse(LibraryStore.write(lib)))
     }
