@@ -147,11 +147,12 @@ Why sort at all: not every user runs RimSort, and an unsorted list means startin
 
 ## Core and DLCs
 
-Core and the DLCs (`ludeon.rimworld`, `ludeon.rimworld.royalty`, `ludeon.rimworld.biotech`, …) live in the game's install folder, not in Workshop. For the first version they are not scanned: the known Ludeon packageIds are treated as always installed (all DLCs are owned).
+Core and the DLCs (`ludeon.rimworld`, `ludeon.rimworld.royalty`, `ludeon.rimworld.biotech`, …) live in the game's install folder (`<game>/Data/<name>/About/About.xml`), not in Workshop. They are scanned from there like mods (name, preview, load-order rules); what is found there is what is installed.
 
-- Core is always written to the mod list.
-- A DLC is added to the mod list only when some mod in the set requires it.
-- The UI shows which DLCs a build requires.
+- They are shown at the top of the tree, before the folders, in release order. They cannot be moved or placed in folders.
+- **Core** has a checkbox that is always on and cannot be changed: Core is always written to the mod list.
+- **A DLC** is content in its own right: its checkbox selects it in the build like an ordinary mod.
+- A DLC some mod in the set requires is added at activation even if not selected, like any dependency; the activation dialog lists it.
 
 ## Platform and stack
 

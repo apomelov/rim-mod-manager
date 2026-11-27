@@ -8,7 +8,7 @@ Source: the game's code, `Verse.ModsConfig.TrySortMods` and `Verse.DirectedAcycl
 
 1. The set to activate (see requirements, Export pipeline): selected mods, their transitive dependencies, their translations, Core, the DLCs some mod in the set requires.
 2. **Initial order** (the only tie-break, see below):
-   1. Core, then the DLCs in release order: Royalty, Ideology, Biotech, Anomaly, Odyssey.
+   1. Core, then the DLCs in release order: Royalty, Ideology, Biotech, Anomaly, Odyssey. Their rules come from their own About.xml in the game folder (a built-in copy of those rules is the fallback).
    2. All other mods by name, case-insensitively, then by packageId.
 
 ## Constraints

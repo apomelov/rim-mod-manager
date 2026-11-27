@@ -7,6 +7,7 @@ Both files live in `$XDG_CONFIG_HOME/rimmodmanager/` (default `~/.config/rimmodm
 Machine-specific paths; not meant for git.
 
 ```yaml
+gameDir: ~/.steam/steam/steamapps/common/RimWorld
 modsDir: ~/.steam/steam/steamapps/workshop/content/294100
 modsConfigFile: ~/.config/unity3d/Ludeon Studios/RimWorld by Ludeon Studios/Config/ModsConfig.xml
 port: 8765
@@ -14,6 +15,7 @@ port: 8765
 
 - A leading `~` is expanded to the home directory.
 - Missing file or missing keys → the defaults above.
+- `gameDir` is read only: Core and the DLCs are scanned from its `Data` folder.
 
 ## library.yaml
 
