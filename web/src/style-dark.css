@@ -96,3 +96,4 @@ button.primary { background: var(--accent); border-color: var(--drop); }
 button:disabled { opacity: .5; cursor: default; }
 code { font-size: .9em; overflow-wrap: anywhere; }
 .tabs-hint { align-self: center; padding: 0 8px; color: var(--muted); font-style: italic; }
+button.danger { background: #5a2626; border-color: var(--error); }

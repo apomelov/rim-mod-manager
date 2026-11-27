@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Tree, type NodeApi, type NodeRendererProps, type TreeApi } from "react-arborist";
+import { useConfirm } from "./Dialog";
 import { ContextMenu } from "./Menu";
 import { buildEdits, iconUrl, libraryEdits, type Build, type LibraryResponse, type LibraryView, type ModEntry } from "./api";
 import { allFolders, buildTree, folderId, freshName, isPredefined, SORTOUT_ID, type TreeNode } from "./treeData";
@@ -212,6 +213,7 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit, buil
   const box = useSize<HTMLDivElement>();
   const [menu, setMenu] = useState<Menu | null>(null);
   const closeMenu = useCallback(() => setMenu(null), []);
+  const confirm = useConfirm();
   const [pendingRename, setPendingRename] = useState<string>();
   const syncing = useRef(false);
   const [dropZone, setDropZone] = useState<string | null>(null);
@@ -287,7 +289,8 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit, buil
 
   async function deleteFolder(f: FolderNode) {
     const what = f.count > 0 ? ` Its ${f.count} mod(s) go back to Sortout.` : "";
-    if (window.confirm(`Delete folder "${f.path}"?${what}`)) await onEdit(libraryEdits.deleteFolder(f.path));
+    const ok = await confirm({ title: "Delete folder", message: <>Delete folder “{f.path}”?{what}</>, confirm: "Delete", danger: true });
+    if (ok) await onEdit(libraryEdits.deleteFolder(f.path));
   }
 
   /** The right-clicked mod, or every selected mod if it is part of a multi-selection. */

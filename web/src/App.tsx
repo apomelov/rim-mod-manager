@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { deleteLeftover, fetchLibrary, type LibraryResponse, type Problem } from "./api";
 import { BuildTabs } from "./BuildTabs";
+import { useConfirm } from "./Dialog";
 import { Details } from "./Details";
 import { LibraryTree } from "./Tree";
 import { allMods } from "./treeData";
@@ -11,6 +12,7 @@ export function App() {
   const [editError, setEditError] = useState<string>();
   const [showHidden, setShowHidden] = useState(false);
   const [selected, setSelected] = useState<string>();
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchLibrary().then(setData, (e: Error) => setError(e.message));
@@ -33,10 +35,14 @@ export function App() {
     }
   };
 
-  const removeLeftover = (p: Problem) => {
-    if (window.confirm(`Delete folder "${p.removableFolder}" from the mods folder? It holds only .dds textures.`)) {
-      onEdit(deleteLeftover(p.removableFolder!));
-    }
+  const removeLeftover = async (p: Problem) => {
+    const ok = await confirm({
+      title: "Delete leftover folder",
+      message: <>Delete <code>{p.removableFolder}</code> from the mods folder? It holds only .dds textures.</>,
+      confirm: "Delete",
+      danger: true,
+    });
+    if (ok) onEdit(deleteLeftover(p.removableFolder!));
   };
 
   if (error) return <p className="error">{error}</p>;

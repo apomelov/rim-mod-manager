@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { buildEdits, type Build, type LibraryResponse } from "./api";
 import { ActivateDialog } from "./ActivateDialog";
+import { useConfirm } from "./Dialog";
 import { ContextMenu } from "./Menu";
 import { freshName } from "./treeData";
 
@@ -18,6 +19,7 @@ export function BuildTabs({ builds, current, onEdit, nameOf }: Props) {
   const [menu, setMenu] = useState<{ x: number; y: number; build: string } | null>(null);
   const [renaming, setRenaming] = useState<string>();
   const closeMenu = useCallback(() => setMenu(null), []);
+  const confirm = useConfirm();
 
   async function create() {
     const name = freshName(builds.map((b) => b.name), "New build");
@@ -29,10 +31,14 @@ export function BuildTabs({ builds, current, onEdit, nameOf }: Props) {
     if (newName.trim() && newName.trim() !== name) await onEdit(buildEdits.rename(name, newName));
   }
 
-  function remove(name: string) {
-    if (window.confirm(`Delete build "${name}"? Its mod selection is lost; the mods themselves stay.`)) {
-      onEdit(buildEdits.remove(name));
-    }
+  async function remove(name: string) {
+    const ok = await confirm({
+      title: "Delete build",
+      message: <>Delete build “{name}”? Its mod selection is lost; the mods themselves stay.</>,
+      confirm: "Delete",
+      danger: true,
+    });
+    if (ok) onEdit(buildEdits.remove(name));
   }
 
   return (

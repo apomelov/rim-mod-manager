@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Dialog } from "./Dialog";
 import { activate, fetchActivation, type ActivationPreview, type ActivationResult, type Dependency } from "./api";
 
 interface Props {
@@ -32,12 +33,6 @@ export function ActivateDialog({ build, nameOf, onClose }: Props) {
     fetchActivation(build).then(setPreview, (e: Error) => setError(e.message));
   }, [build]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !busy && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [busy, onClose]);
-
   async function run() {
     setBusy(true);
     try {
@@ -53,9 +48,7 @@ export function ActivateDialog({ build, nameOf, onClose }: Props) {
   const names = (ids: string[]) => ids.map(nameOf).join(", ");
 
   return (
-    <div className="overlay" onClick={() => !busy && onClose()}>
-      <div className="dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <h2>Activate “{build}”</h2>
+    <Dialog title={`Activate “${build}”`} onClose={onClose} locked={busy}>
         {error && <p className="error">{error}</p>}
         {!p && !error && <p className="muted">Checking…</p>}
 
@@ -136,7 +129,6 @@ export function ActivateDialog({ build, nameOf, onClose }: Props) {
             </>
           )}
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 }
