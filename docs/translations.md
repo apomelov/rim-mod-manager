@@ -17,15 +17,17 @@ Words like "RU" or "Rus" in names are not used.
 
 ## Algorithm
 
-1. **Candidates**: mods in Sortout that ship a non-English language and either
+1. **Candidates**: mods in Sortout that ship a non-English language, or translate keys in any folder (Languages for other game versions count here), and either
    - have no own content, or
    - have own content but ≥ 80 % of their translation keys are shared with one other mod they depend on or link to (forks like a Russian Prepare Carefully).
 2. **Originals** for a candidate: any mod on disk except the candidate. Greedy cover: take the mod sharing the most not-yet-covered keys, repeat while it adds **at least 3 keys** and either **≥ 10 % of the candidate's keys** or **≥ 30 % of that mod's own keys**. This keeps every member of a pack and drops libraries that share a key or two.
 3. **Ties** (two mods share the same keys, e.g. a mod and another that bundles it): a mod named by a dependency or a Workshop link wins.
 4. A candidate with no original found (no shared keys) is still listed, as "looks like a translation", so it can be linked by hand.
 
-Each suggestion carries its evidence (shared keys, dependency, link) for display. The same original can come up for several translations, and one translation for several originals.
+Each suggestion carries its evidence (shared keys, dependency, link) for display.
+
+**UI**: "Find translations" in the header opens the suggestions over the tree (not as a modal, so the details panel stays usable for checking a mod): one row per pair, original left, translation right, evidence in between; ✓ adds the original to the translation's mark and removes the row, × dismisses it for this session. The same original can come up for several translations, and one translation for several originals.
 
 ## Validation
 
-A comparison against the user's marks (precision and recall of pairs, misses and extras) is a manual dev check on real data, not part of the test suite. Expected misses today: two translations whose `Languages` share no keys with any mod (`kamikadza13.roolo.almostthere`, `am.rus.smartstockpilecreation`).
+A comparison against the user's marks (precision and recall of pairs, misses and extras) is a manual dev check on real data, not part of the test suite. Result on 2026-11-27: 55 of 58 expected pairs found, 2 extra (`ow.ru.core` → two small mods it also depends on, plausibly right). Expected misses: two translations whose `Languages` share no keys with any mod (`kamikadza13.roolo.almostthere`, `am.rus.smartstockpilecreation`), and one pack member sharing no keys. Run it with `RMM_TRUTH=<library.yaml with marks> ./gradlew :server:test --tests '*RealDataCheck*'`.
