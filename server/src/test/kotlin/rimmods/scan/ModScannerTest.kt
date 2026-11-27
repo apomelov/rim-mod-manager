@@ -92,4 +92,16 @@ class ModScannerTest {
         assertEquals(listOf(dir.resolve("111").toString()), result.mods.map { it.folder })
         assertEquals(2, result.problems.count { "Duplicate" in it.message })
     }
+
+    @Test
+    fun `several mods folders - the first one's copy wins, the duplicate is reported, a missing folder too`() {
+        mod("local/A", "a.one")
+        mod("workshop/111", "a.one")
+        mod("workshop/222", "a.two")
+        val result = scanner.scan(listOf(dir.resolve("local"), dir.resolve("workshop"), dir.resolve("gone")))
+        assertEquals(listOf("a.one", "a.two"), result.mods.map { it.packageId.value })
+        assertTrue(result.mods.first().folder.endsWith("local/A"))
+        assertTrue(result.problems.any { "Duplicate" in it.message && it.folder.endsWith("workshop/111") })
+        assertTrue(result.problems.any { it.folder.endsWith("gone") && "not found" in it.message })
+    }
 }

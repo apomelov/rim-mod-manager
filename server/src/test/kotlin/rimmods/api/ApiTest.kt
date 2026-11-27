@@ -35,7 +35,7 @@ class ApiTest {
         }
         val modsConfig = dir.resolve("ModsConfig.xml")
         modsConfig.writeText("<ModsConfigData><version>1.6.1 rev1</version><activeMods/></ModsConfigData>")
-        return Settings(dir.resolve("cfg"), mods, modsConfig, 0)
+        return Settings(configDir = dir.resolve("cfg"), gameDir = null, gameConfigDir = modsConfig.parent, workshopDir = mods, port = 0)
     }
 
     @Test
@@ -84,7 +84,7 @@ class ApiTest {
     @Test
     fun `a leftover folder with only dds textures can be deleted, nothing else can`() = testApplication {
         val settings = settings()
-        val leftover = settings.modsDir.resolve("3").resolve("Textures").createDirectories()
+        val leftover = settings.workshopDir!!.resolve("3").resolve("Textures").createDirectories()
         leftover.resolve("x.dds").writeText("dds")
         application { module(settings) }
 
@@ -94,16 +94,18 @@ class ApiTest {
         }
 
         val first = json.decodeFromString<LibraryResponse>(client.get("/api/library").bodyAsText())
-        assertEquals(listOf("3"), first.problems.mapNotNull { it.removableFolder })
+        val leftoverPath = settings.workshopDir!!.resolve("3").toString()
+        assertEquals(listOf(leftoverPath), first.problems.mapNotNull { it.removableFolder })
 
-        assertEquals(HttpStatusCode.BadRequest, delete("1").status) // a real mod
-        assertEquals(HttpStatusCode.BadRequest, delete("..").status)
-        assertEquals(HttpStatusCode.BadRequest, delete("nope").status)
-        assertTrue(settings.modsDir.resolve("1").exists())
+        assertEquals(HttpStatusCode.BadRequest, delete(settings.workshopDir!!.resolve("1").toString()).status) // a real mod
+        assertEquals(HttpStatusCode.BadRequest, delete(settings.workshopDir!!.resolve("3/../1").toString()).status)
+        assertEquals(HttpStatusCode.BadRequest, delete("3").status) // not a path
+        assertEquals(HttpStatusCode.BadRequest, delete(dir.resolve("elsewhere").toString()).status)
+        assertTrue(settings.workshopDir!!.resolve("1").exists())
 
-        val r = delete("3")
+        val r = delete(leftoverPath)
         assertEquals(HttpStatusCode.OK, r.status)
-        assertFalse(settings.modsDir.resolve("3").exists())
+        assertFalse(settings.workshopDir!!.resolve("3").exists())
         assertEquals(emptyList(), json.decodeFromString<LibraryResponse>(r.bodyAsText()).problems)
     }
 
@@ -162,7 +164,7 @@ class ApiTest {
     @Test
     fun `a blocked build is not written`() = testApplication {
         val settings = settings()
-        settings.modsDir.resolve("3").resolve("About").createDirectories().resolve("About.xml")
+        settings.workshopDir!!.resolve("3").resolve("About").createDirectories().resolve("About.xml")
             .writeText("<ModMetaData><packageId>needs.lib</packageId><modDependencies><li><packageId>no.lib</packageId></li></modDependencies></ModMetaData>")
         val before = settings.modsConfigFile.readText()
         application { module(settings) }
@@ -179,9 +181,9 @@ class ApiTest {
     @Test
     fun `translation suggestions for Sortout`() = testApplication {
         val settings = settings()
-        val orig = settings.modsDir.resolve("1")
+        val orig = settings.workshopDir!!.resolve("1")
         orig.resolve("Defs").createDirectories().resolve("D.xml").writeText("<Defs><ThingDef><defName>Gun</defName></ThingDef><ThingDef><defName>Axe</defName></ThingDef></Defs>")
-        val ru = settings.modsDir.resolve("2").resolve("Languages").resolve("Russian").resolve("DefInjected").resolve("ThingDef").createDirectories()
+        val ru = settings.workshopDir!!.resolve("2").resolve("Languages").resolve("Russian").resolve("DefInjected").resolve("ThingDef").createDirectories()
         ru.resolve("T.xml").writeText("<LanguageData><Gun.label>пушка</Gun.label><Axe.label>топор</Axe.label></LanguageData>")
         application { module(settings) }
 
@@ -189,5 +191,28 @@ class ApiTest {
         val s = r.suggestions.single()
         assertEquals("a.mod.ru", s.translation.value)
         assertEquals(listOf("a.mod"), s.originals.map { it.packageId.value })
+    }
+
+    @Test
+    fun `not set up - library is a 409, setup saves settings and the library works`() = testApplication {
+        val configured = settings()
+        val state = AppState(dir.resolve("fresh"), null)
+        application { module(state) }
+
+        assertEquals(HttpStatusCode.Conflict, client.get("/api/library").status)
+        val setup = json.decodeFromString<SetupResponse>(client.get("/api/setup").bodyAsText())
+        assertFalse(setup.configured)
+
+        // The temp game config has ModsConfig.xml but there is no game folder: saving is refused.
+        val paths = """{"gameConfigDir":"${configured.gameConfigDir}","workshopDir":"${configured.workshopDir}","libraryFile":"${dir.resolve("fresh/library.yaml")}"}"""
+        val refused = client.post("/api/setup") { contentType(ContentType.Application.Json); setBody(paths) }
+        assertEquals(HttpStatusCode.BadRequest, refused.status)
+
+        val game = dir.resolve("game")
+        game.resolve("Data/Core/About").createDirectories().resolve("About.xml").writeText("<ModMetaData><packageId>Ludeon.RimWorld</packageId></ModMetaData>")
+        val ok = client.post("/api/setup") { contentType(ContentType.Application.Json); setBody(paths.replace("{", "{\"gameDir\":\"$game\",")) }
+        assertEquals(HttpStatusCode.OK, ok.status, ok.bodyAsText())
+        assertTrue(rimmods.Settings.file(dir.resolve("fresh")).toFile().exists())
+        assertEquals(HttpStatusCode.OK, client.get("/api/library").status)
     }
 }

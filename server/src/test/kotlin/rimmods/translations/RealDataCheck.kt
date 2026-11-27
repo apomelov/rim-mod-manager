@@ -19,9 +19,9 @@ import rimmods.scan.ModsConfigReader
 class RealDataCheck {
     @Test
     fun compare() {
-        val settings = Settings.load()
+        val settings = Settings.load(Settings.defaultConfigDir()) ?: error("Not set up")
         val cfg = ModsConfigReader.read(settings.modsConfigFile)
-        val mods = ModScanner(cfg.gameVersion).scan(settings.modsDir).mods
+        val mods = ModScanner(cfg.gameVersion).scan(settings.modsDirs).mods
         val truth = LibraryStore.parse(File(System.getenv("RMM_TRUTH")).readText()).library
         val unmarked = truth.copy(translations = emptyMap())
         val sortout = LibrarySync.view(unmarked, mods).sortout.map { it.packageId }.toSet()

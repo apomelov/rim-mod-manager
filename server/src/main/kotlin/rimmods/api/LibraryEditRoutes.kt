@@ -53,12 +53,13 @@ data class SelectModsRequest(val build: String, val mods: List<String>, val sele
 private val editLock = Mutex()
 
 /** Every edit: load the file, apply, save, answer with the fresh library (no rescan). */
-fun Route.libraryEditRoutes(settings: Settings, state: AppState) {
+fun Route.libraryEditRoutes(state: AppState) {
     suspend fun RoutingCall.edit(change: (Library) -> Library) {
         val response = editLock.withLock {
-            val loaded = LibraryStore.load(settings.libraryFile)
+            val file = state.settings().libraryFile
+            val loaded = LibraryStore.load(file)
             val changed = change(loaded.library)
-            if (changed != loaded.library) LibraryStore.save(settings.libraryFile, changed)
+            if (changed != loaded.library) LibraryStore.save(file, changed)
             libraryResponse(state, loaded.copy(library = changed))
         }
         respond(response)

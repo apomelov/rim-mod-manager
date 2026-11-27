@@ -12,12 +12,25 @@ import kotlin.io.path.readText
 /** Scans the mods folder (one sub-folder per mod). Never fails as a whole: bad mods become [ScanProblem]s. */
 class ModScanner(private val gameVersion: GameVersion) {
 
-    fun scan(modsDir: Path): ScanResult {
-        require(modsDir.isDirectory()) { "Mods folder not found: $modsDir" }
+    fun scan(modsDir: Path): ScanResult = scan(listOf(modsDir))
+
+    /**
+     * Scans mods folders in priority order: for a packageId found in several, the first folder's copy is kept
+     * (the local Mods folder before Workshop, as in the game). A missing folder is a problem, not a failure.
+     */
+    fun scan(modsDirs: List<Path>): ScanResult {
         val mods = mutableListOf<Mod>()
         val problems = mutableListOf<ScanProblem>()
+        val folders = modsDirs.flatMap { dir ->
+            if (dir.isDirectory()) {
+                dir.listDirectoryEntries().filter { it.isDirectory() }.sortedBy { it.name }
+            } else {
+                problems += ScanProblem(dir.toString(), "Mods folder not found")
+                emptyList()
+            }
+        }
 
-        for (folder in modsDir.listDirectoryEntries().filter { it.isDirectory() }.sortedBy { it.name }) {
+        for (folder in folders) {
             val about = folder.resolve("About").resolve("About.xml")
             if (!about.exists()) {
                 problems += if (Leftovers.isTexturesOnly(folder)) {

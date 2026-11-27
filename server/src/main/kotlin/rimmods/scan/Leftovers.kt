@@ -30,16 +30,15 @@ object Leftovers {
     }
 
     /**
-     * Deletes the mods-folder entry [name] if it is, right now, a real folder with only `.dds` textures and no
-     * About.xml. Anything else is refused with [LeftoverException].
+     * Deletes [path] if it is, right now, a real folder directly inside one of [modsDirs], with only `.dds` textures.
+     * Anything else is refused with [LeftoverException].
      */
-    fun delete(modsDir: Path, name: String) {
-        if (name.isBlank() || name == "." || name == ".." || '/' in name || '\\' in name) {
-            throw LeftoverException("Not a folder name: '$name'")
-        }
-        val folder = modsDir.resolve(name)
-        if (!Files.isDirectory(folder, LinkOption.NOFOLLOW_LINKS)) throw LeftoverException("No folder '$name' in the mods folder")
-        if (!isTexturesOnly(folder)) throw LeftoverException("'$name' is not a folder with only .dds textures")
+    fun delete(modsDirs: List<Path>, path: String) {
+        val folder = runCatching { Path.of(path).normalize() }.getOrNull()
+        val inModsDir = folder != null && folder.isAbsolute && modsDirs.any { folder.parent == it.normalize() }
+        if (!inModsDir) throw LeftoverException("'$path' is not a folder directly inside a mods folder")
+        if (!Files.isDirectory(folder, LinkOption.NOFOLLOW_LINKS)) throw LeftoverException("No folder '$path'")
+        if (!isTexturesOnly(folder!!)) throw LeftoverException("'$path' is not a folder with only .dds textures")
         Files.walk(folder).use { paths -> paths.sorted(Comparator.reverseOrder()).forEach(Files::delete) }
     }
 }

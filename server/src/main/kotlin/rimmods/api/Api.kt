@@ -54,7 +54,7 @@ data class BuildView(val name: String, val mods: List<String>)
 @Serializable
 data class Problem(
     val message: String,
-    /** Set for a mods-folder entry the app may delete (see [Leftovers]): its folder name. */
+    /** Set for a mods-folder entry the app may delete (see [Leftovers]): its path. */
     val removableFolder: String? = null,
 )
 
@@ -64,14 +64,19 @@ data class DeleteLeftoverRequest(val folder: String)
 @Serializable
 data class ErrorResponse(val error: String)
 
-fun Application.module(settings: Settings, state: AppState = AppState(settings)) {
+fun Application.module(settings: Settings) = module(AppState(settings))
+
+fun Application.module(state: AppState) {
     install(ContentNegotiation) { json() }
     install(StatusPages) {
         exception<LibraryFileException> { call, e ->
-            call.respond(HttpStatusCode.InternalServerError, ErrorResponse("${settings.libraryFile}: ${e.message}"))
+            call.respond(HttpStatusCode.InternalServerError, ErrorResponse("${state.settingsOrNull()?.libraryFile}: ${e.message}"))
         }
         exception<ModsConfigWriteException> { call, e ->
             call.respond(HttpStatusCode.InternalServerError, ErrorResponse(e.message ?: "Cannot write ModsConfig.xml"))
+        }
+        exception<NotConfiguredException> { call, e ->
+            call.respond(HttpStatusCode.Conflict, ErrorResponse(e.message ?: "Not set up"))
         }
         exception<LeftoverException> { call, e ->
             call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Cannot delete"))
@@ -94,16 +99,17 @@ fun Application.module(settings: Settings, state: AppState = AppState(settings))
         get("/api/mods/{packageId}/icon") { call.respondImage(call.mod(state)?.icon) }
         get("/api/library") {
             state.rescan()
-            call.respond(libraryResponse(state, LibraryStore.load(settings.libraryFile)))
+            call.respond(libraryResponse(state, LibraryStore.load(state.settings().libraryFile)))
         }
-        libraryEditRoutes(settings, state)
-        activationRoutes(settings, state)
-        translationRoutes(settings, state)
+        libraryEditRoutes(state)
+        activationRoutes(state)
+        translationRoutes(state)
+        setupRoutes(state)
         post("/api/leftovers/delete") {
             val r = call.receive<DeleteLeftoverRequest>()
-            Leftovers.delete(settings.modsDir, r.folder)
+            Leftovers.delete(state.settings().modsDirs, r.folder)
             state.rescan()
-            call.respond(libraryResponse(state, LibraryStore.load(settings.libraryFile)))
+            call.respond(libraryResponse(state, LibraryStore.load(state.settings().libraryFile)))
         }
         // Client build, present only in the fat jar; in development Vite serves the client.
         staticResources("/", "static")
@@ -117,7 +123,7 @@ fun libraryResponse(state: AppState, loaded: LoadedLibrary): LibraryResponse {
         library = LibrarySync.view(loaded.library, s.scan.mods, s.game),
         translations = loaded.library.translations.map { (k, v) -> k.value to v.map { it.value } }.toMap(),
         problems = s.scan.problems.map {
-            Problem("${it.folder}: ${it.message}", removableFolder = if (it.texturesOnly) File(it.folder).name else null)
+            Problem("${it.folder}: ${it.message}", removableFolder = if (it.texturesOnly) it.folder else null)
         } + loaded.problems.map { Problem(it) },
         builds = loaded.library.builds.map { b -> BuildView(b.name, b.mods.map { it.value }) },
         currentBuild = BuildEdits.current(loaded.library)?.name,
