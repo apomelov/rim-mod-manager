@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { deleteLeftover, fetchLibrary, type LibraryResponse, type Problem } from "./api";
+import { BuildTabs } from "./BuildTabs";
 import { Details } from "./Details";
 import { LibraryTree } from "./Tree";
 import { allMods } from "./treeData";
@@ -72,7 +73,15 @@ export function App() {
             ))}
           </ul>
         )}
-        <LibraryTree view={data.library} showHidden={showHidden} selected={selected} onSelect={setSelected} onEdit={onEdit} />
+        <BuildTabs builds={data.builds} current={data.currentBuild} onEdit={onEdit} />
+        <LibraryTree
+          view={data.library}
+          showHidden={showHidden}
+          selected={selected}
+          onSelect={setSelected}
+          onEdit={onEdit}
+          build={data.builds.find((b) => b.name === data.currentBuild)}
+        />
       </main>
     </div>
   );

@@ -25,6 +25,15 @@ export interface LibraryResponse {
   /** translation packageId → packageIds it translates */
   translations: Record<string, string[]>;
   problems: Problem[];
+  builds: Build[];
+  /** The open tab; absent when there are no builds. */
+  currentBuild?: string;
+}
+
+export interface Build {
+  name: string;
+  /** Explicitly selected packageIds. */
+  mods: string[];
 }
 
 export interface Problem {
@@ -107,4 +116,13 @@ export const libraryEdits = {
   setExpanded: (path: string, expanded: boolean) => edit("expanded", { path, expanded }),
   markTranslation: (translation: string, originals: string[]) => edit("mark-translation", { translation, originals }),
   unmarkTranslation: (translation: string) => edit("unmark-translation", { translation }),
+};
+
+export const buildEdits = {
+  create: (name: string) => post("/api/builds/create", { name }),
+  rename: (name: string, newName: string) => post("/api/builds/rename", { name, newName }),
+  duplicate: (name: string) => post("/api/builds/duplicate", { name }),
+  remove: (name: string) => post("/api/builds/delete", { name }),
+  setCurrent: (name: string) => post("/api/builds/current", { name }),
+  select: (build: string, mods: string[], selected: boolean) => post("/api/builds/select", { build, mods, selected }),
 };

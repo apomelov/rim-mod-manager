@@ -49,3 +49,12 @@ button.small { padding: 0 4px; font-size: 0.8em; }
 .description { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.85em; background: #f7f7f7; padding: 8px; border-radius: 4px; }
 .muted { color: var(--muted); }
 .error { color: #b00020; }
+
+.tabs { flex: none; display: flex; align-items: flex-end; gap: 2px; padding: 4px 8px 0 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { padding: 4px 14px; border: 1px solid var(--border); border-bottom: none; border-radius: 6px 6px 0 0; background: #f4f4f4; color: var(--muted); cursor: pointer; white-space: nowrap; user-select: none; }
+.tab.current { background: white; color: black; font-weight: 600; margin-bottom: -1px; padding-bottom: 5px; }
+.tab.add { padding: 4px 10px; font-weight: 600; }
+.tab .rename { width: 12em; }
+.check { margin: 0; flex: none; }
+.check-space { width: 13px; flex: none; }
+.menu li.disabled { color: var(--muted); cursor: default; }

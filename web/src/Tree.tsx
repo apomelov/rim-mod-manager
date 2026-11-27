@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Tree, type NodeApi, type NodeRendererProps, type TreeApi } from "react-arborist";
-import { iconUrl, libraryEdits, type LibraryResponse, type LibraryView, type ModEntry } from "./api";
+import { ContextMenu } from "./Menu";
+import { buildEdits, iconUrl, libraryEdits, type Build, type LibraryResponse, type LibraryView, type ModEntry } from "./api";
 import { allFolders, buildTree, folderId, freshName, isPredefined, SORTOUT_ID, type TreeNode } from "./treeData";
 
 type FolderNode = Extract<TreeNode, { kind: "folder" }>;
@@ -13,9 +14,14 @@ interface Props {
   onSelect: (packageId: string) => void;
   /** Runs an edit; on success the app takes the new library. Resolves to whether it succeeded. */
   onEdit: (edit: Promise<LibraryResponse>) => Promise<boolean>;
+  /** The open build tab; without one the tree has no checkboxes. */
+  build?: Build;
 }
 
 interface Ctx {
+  /** Mods selected in the open build; null when there is no build (no checkboxes). */
+  checked: Set<string> | null;
+  check: (mods: string[], selected: boolean) => void;
   selected?: string;
   showHidden: boolean;
   onSelect: (packageId: string) => void;
@@ -23,6 +29,35 @@ interface Ctx {
   /** The folder (or Sortout) a drag would drop into; its whole subtree is highlighted. */
   dropZone: string | null;
   hoverDrag: (node: NodeApi<TreeNode>) => void;
+}
+
+/** Mods a folder's checkbox stands for: every mod below it, except marked translations (they follow their originals). */
+function checkableMods(node: TreeNode): string[] {
+  if (node.kind === "mod") return node.entry.hidden ? [] : [node.entry.packageId];
+  if (node.kind === "folder") return node.children.flatMap(checkableMods);
+  return [];
+}
+
+function Checkbox({ node }: { node: TreeNode }) {
+  const { checked, check } = useContext(TreeContext);
+  if (!checked) return null;
+  const mods = node.kind === "sortout" ? [] : checkableMods(node);
+  if (mods.length === 0 || node.kind === "translation") return <span className="check-space" />;
+  const on = mods.filter((m) => checked.has(m)).length;
+  const all = on === mods.length;
+  return (
+    <input
+      type="checkbox"
+      className="check"
+      checked={on > 0 && all}
+      ref={(el) => {
+        if (el) el.indeterminate = on > 0 && !all;
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onChange={() => check(mods, !all)}
+    />
+  );
 }
 
 /** The folder or Sortout a row belongs to: the row itself if it is one, else its nearest such ancestor. */
@@ -57,24 +92,6 @@ function canDropInto(zone: NodeApi<TreeNode> | null, dragged: NodeApi<TreeNode>[
 }
 
 const TreeContext = createContext<Ctx>(null!);
-
-/** A context menu at the cursor, flipped up and/or left when it would not fit in the viewport. */
-function ContextMenu({ x, y, children }: { x: number; y: number; children: ReactNode }) {
-  const ref = useRef<HTMLUListElement>(null);
-  const [pos, setPos] = useState({ left: x, top: y });
-  useLayoutEffect(() => {
-    const r = ref.current!.getBoundingClientRect();
-    setPos({
-      left: x + r.width > window.innerWidth ? Math.max(0, x - r.width) : x,
-      top: y + r.height > window.innerHeight ? Math.max(0, y - r.height) : y,
-    });
-  }, [x, y]);
-  return (
-    <ul className="menu" ref={ref} style={pos}>
-      {children}
-    </ul>
-  );
-}
 
 /** Placeholder for mods without an icon: a jigsaw piece. */
 function PuzzleIcon() {
@@ -163,6 +180,7 @@ function Row({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
       >
         {node.isLeaf ? "" : node.isOpen ? "▾" : "▸"}
       </span>
+      <Checkbox node={d} />
       {entry && <Icon mod={entry} />}
       {node.isEditing ? <EditInput node={node} /> : <span className="name" title={entry?.packageId}>{d.name}</span>}
       {entry?.missing && <span className="badge">missing</span>}
@@ -184,11 +202,13 @@ function useSize<T extends HTMLElement>() {
   return { ref, ...size };
 }
 
-export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Props) {
+export function LibraryTree({ view, showHidden, selected, onSelect, onEdit, build }: Props) {
+  const checked = useMemo(() => (build ? new Set(build.mods) : null), [build]);
   const data = useMemo(() => buildTree(view, showHidden), [view, showHidden]);
   const tree = useRef<TreeApi<TreeNode> | null>(null);
   const box = useSize<HTMLDivElement>();
   const [menu, setMenu] = useState<Menu | null>(null);
+  const closeMenu = useCallback(() => setMenu(null), []);
   const [pendingRename, setPendingRename] = useState<string>();
   const syncing = useRef(false);
   const [dropZone, setDropZone] = useState<string | null>(null);
@@ -228,26 +248,13 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
     }
   }, [data, pendingRename]);
 
-  useEffect(() => {
-    if (!menu) return;
-    const close = () => setMenu(null);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-    // Scroll does not bubble; capture catches the tree's own scroll container too.
-    window.addEventListener("click", close);
-    window.addEventListener("scroll", close, true);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("click", close);
-      window.removeEventListener("scroll", close, true);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [menu]);
-
   const parentOf = (node: NodeApi<TreeNode> | null): TreeNode | null => (node && !node.isRoot ? node.data : null);
 
   const ctx: Ctx = {
+    checked,
+    check: (mods, on) => {
+      if (build) onEdit(buildEdits.select(build.name, mods, on));
+    },
     selected,
     showHidden,
     onSelect,
@@ -358,7 +365,7 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit }: Pr
         )}
       </div>
       {menu && (
-        <ContextMenu x={menu.x} y={menu.y}>
+        <ContextMenu x={menu.x} y={menu.y} onClose={closeMenu}>
           {menu.node?.kind === "folder" ? (
             <>
               <li onClick={() => createFolder(menu.node as FolderNode)}>New subfolder</li>
