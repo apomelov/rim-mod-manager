@@ -15,7 +15,7 @@ Source: the game's code, `Verse.ModsConfig.TrySortMods` and `Verse.DirectedAcycl
 
 - Only the four load-order fields create edges: `loadBefore`, `loadAfter`, `forceLoadBefore`, `forceLoadAfter`. `loadBefore`/`loadAfter` use their `…ByVersion` entry for the game version when there is one (it replaces the plain list). There is no `forceLoad…ByVersion`.
 - `modDependencies` do **not** order anything (the game only checks that they are active); `incompatibleWith` neither.
-- A rule naming a mod outside the set is ignored.
+- A rule naming a mod outside the set, or the mod itself, is ignored.
 - packageIds are compared case-insensitively.
 - Core and DLCs get no special treatment: their order comes from their own `forceLoad…` rules, and ordinary mods get no implicit "after Core". A mod that declares `loadBefore` Core (e.g. Harmony) ends up above it.
 
