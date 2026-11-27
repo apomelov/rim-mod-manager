@@ -29,7 +29,8 @@ Stack: Kotlin + Ktor backend, React + TypeScript (Vite) frontend, one Gradle pro
 ## Permissions
 
 - Without asking: read/write project files, run tests and builds, create helper scripts.
-- Only with explicit consent: anything touching the real game — writing `ModsConfig.xml`, files in RimWorld or Workshop folders, launching RimSort. During development work on copies.
+- Writing the real `ModsConfig.xml` (through the app's activation, with its backup) is allowed: a broken mod list is recoverable, since every save stores its own list and the game offers to load it.
+- Only with explicit consent: anything else touching the real game — files in RimWorld or Workshop folders, launching RimSort. During development work on copies.
 - New dependencies or stack changes: discuss first.
 
 ## Subagents
