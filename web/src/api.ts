@@ -182,3 +182,45 @@ export async function fetchSuggestions(): Promise<{ suggestions: TranslationSugg
   if (!res.ok) throw await errorOf(res, "translation suggestions");
   return res.json();
 }
+
+export interface SetupPaths {
+  gameDir: string;
+  gameConfigDir: string;
+  workshopDir: string;
+  localModsDir: string;
+  libraryFile: string;
+}
+
+export interface Check {
+  ok: boolean;
+  message: string;
+}
+
+export type SetupChecks = Record<keyof SetupPaths, Check>;
+
+export interface SetupResponse {
+  configured: boolean;
+  configDir: string;
+  os: string;
+  paths: SetupPaths;
+  detected: SetupPaths;
+  checks: SetupChecks;
+}
+
+export async function fetchSetup(): Promise<SetupResponse> {
+  const res = await fetch("/api/setup");
+  if (!res.ok) throw await errorOf(res, "setup");
+  return res.json();
+}
+
+export async function checkSetup(paths: SetupPaths): Promise<SetupChecks> {
+  const res = await fetch("/api/setup/check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(paths) });
+  if (!res.ok) throw await errorOf(res, "check");
+  return res.json();
+}
+
+/** Saves settings.yaml; rejects with the checks' messages when a path is wrong. */
+export async function saveSetup(paths: SetupPaths): Promise<void> {
+  const res = await fetch("/api/setup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(paths) });
+  if (!res.ok) throw new Error("Some paths are not valid");
+}

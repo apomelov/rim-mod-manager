@@ -1,13 +1,52 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { deleteLeftover, fetchLibrary, type LibraryResponse, type Problem } from "./api";
+import { deleteLeftover, fetchLibrary, fetchSetup, type LibraryResponse, type Problem, type SetupResponse } from "./api";
 import { BuildTabs } from "./BuildTabs";
 import { useConfirm } from "./Dialog";
 import { Details } from "./Details";
+import { Setup } from "./Setup";
 import { Suggestions } from "./Suggestions";
 import { LibraryTree } from "./Tree";
 import { allMods } from "./treeData";
 
+/** Setup first: without settings (or when asked) the welcome page, otherwise the library. */
 export function App() {
+  const [setup, setSetup] = useState<SetupResponse>();
+  const [error, setError] = useState<string>();
+  const [editing, setEditing] = useState(false);
+  const [generation, setGeneration] = useState(0);
+
+  const load = useCallback(() => fetchSetup().then(setSetup, (e: Error) => setError(e.message)), []);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (error) return <p className="error">{error}</p>;
+  if (!setup) return <p>Loading…</p>;
+  if (!setup.configured || editing) {
+    return (
+      <Setup
+        setup={setup}
+        onSaved={() => {
+          setEditing(false);
+          setGeneration((g) => g + 1); // reload the library with the new paths
+          load();
+        }}
+        onCancel={setup.configured ? () => setEditing(false) : undefined}
+      />
+    );
+  }
+  return (
+    <Library
+      key={generation}
+      onSettings={() => {
+        load();
+        setEditing(true);
+      }}
+    />
+  );
+}
+
+function Library({ onSettings }: { onSettings: () => void }) {
   const [data, setData] = useState<LibraryResponse>();
   const [error, setError] = useState<string>();
   const [editError, setEditError] = useState<string>();
@@ -63,6 +102,7 @@ export function App() {
           <input type="checkbox" checked={showAllLanguages} onChange={(e) => setShowAllLanguages(e.target.checked)} /> show all
           languages
         </label>
+        <button onClick={onSettings}>Settings</button>
         <button onClick={() => setFindingTranslations(true)} disabled={findingTranslations}>
           Match translations
         </button>

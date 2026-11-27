@@ -111,3 +111,14 @@ main { position: relative; }
 .sugg-mod { display: flex; align-items: center; gap: 6px; min-width: 0; cursor: pointer; white-space: nowrap; }
 .sugg-evidence { font-size: 0.85em; white-space: nowrap; }
 .sugg-actions { display: flex; gap: 4px; }
+
+.setup { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+.setup h1 { font-size: 1.5em; }
+.setup-field { margin: 18px 0; }
+.setup-field label { display: block; font-weight: 600; margin-bottom: 4px; }
+.setup-field input { width: 100%; box-sizing: border-box; padding: 4px 6px; font-family: ui-monospace, monospace; font-size: 0.9em; }
+.setup-check { margin-top: 3px; font-size: 0.9em; }
+.setup-check.ok { color: #7fd18b; }
+.setup-check.bad { color: var(--error); }
+.small { font-size: 0.85em; }
+.setup .buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
