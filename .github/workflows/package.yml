@@ -1,0 +1,65 @@
+# Tests, then native packages with a bundled Java for Linux, Windows and macOS (jpackage builds only for the
+# OS it runs on). Run it by hand (Actions > Package > Run workflow) or by pushing a v* tag; a tag also makes a
+# draft release with the zips attached.
+name: Package
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: npm, cache-dependency-path: web/package-lock.json }
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew :server:test
+      - run: npm ci && npx tsc -b
+        working-directory: web
+
+  package:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: npm, cache-dependency-path: web/package-lock.json }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Native package
+        shell: bash
+        run: ./gradlew :server:jpackageZip
+      - name: Plain zip (needs Java)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: ./gradlew :server:dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rimworld-mod-manager-${{ runner.os }}
+          path: server/build/dist/*.zip
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --repo "$GITHUB_REPOSITORY" --draft --title "$GITHUB_REF_NAME" --generate-notes
