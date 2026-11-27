@@ -139,7 +139,7 @@ Activate turns a build into the game's mod list in a straight run, sorted so tha
 2. Add transitive dependencies (from About.xml).
 3. Add translations of every mod in the set.
 4. Check for problems: missing mods, missing dependencies. A missing dependency **blocks activation** and is listed: the game would not run with that list anyway, and the fix (subscribing and adding the mod) happens through this app. A missing *selected* mod only produces a warning: the rest of the list still runs.
-5. Back up the current `ModsConfig.xml`.
+5. Back up the current `ModsConfig.xml` into `~/.config/rimmodmanager/backups/` (timestamped; kept out of the game's folder; never pruned automatically).
 6. Sort the list the way the game's own "Auto-sort mods" does: see `docs/sort.md`.
 7. Write the new mod list directly to `ModsConfig.xml` (the file the game reads).
 
