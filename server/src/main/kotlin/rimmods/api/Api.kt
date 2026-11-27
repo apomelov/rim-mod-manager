@@ -98,6 +98,7 @@ fun Application.module(settings: Settings, state: AppState = AppState(settings))
         }
         libraryEditRoutes(settings, state)
         activationRoutes(settings, state)
+        translationRoutes(settings, state)
         post("/api/leftovers/delete") {
             val r = call.receive<DeleteLeftoverRequest>()
             Leftovers.delete(settings.modsDir, r.folder)

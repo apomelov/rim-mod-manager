@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { deleteLeftover, fetchLibrary, type LibraryResponse, type Problem } from "./api";
 import { BuildTabs } from "./BuildTabs";
 import { useConfirm } from "./Dialog";
 import { Details } from "./Details";
+import { Suggestions } from "./Suggestions";
 import { LibraryTree } from "./Tree";
 import { allMods } from "./treeData";
 
@@ -12,6 +13,7 @@ export function App() {
   const [editError, setEditError] = useState<string>();
   const [showHidden, setShowHidden] = useState(false);
   const [showAllLanguages, setShowAllLanguages] = useState(false);
+  const [findingTranslations, setFindingTranslations] = useState(false);
   const [selected, setSelected] = useState<string>();
   const confirm = useConfirm();
 
@@ -20,10 +22,10 @@ export function App() {
   }, []);
 
   const mods = useMemo(() => (data ? allMods(data.library) : []), [data]);
-  const nameOf = useMemo(() => {
-    const names = new Map([...mods, ...(data?.library.game ?? [])].map((m) => [m.packageId, m.name]));
-    return (id: string) => names.get(id) ?? id;
-  }, [mods, data]);
+  const entries = useMemo(() => new Map([...mods, ...(data?.library.game ?? [])].map((m) => [m.packageId, m])), [mods, data]);
+  const nameOf = useCallback((id: string) => entries.get(id)?.name ?? id, [entries]);
+  const entryOf = useCallback((id: string) => entries.get(id), [entries]);
+  const closeSuggestions = useCallback(() => setFindingTranslations(false), []);
 
   const onEdit = async (edit: Promise<LibraryResponse>) => {
     try {
@@ -61,6 +63,9 @@ export function App() {
           <input type="checkbox" checked={showAllLanguages} onChange={(e) => setShowAllLanguages(e.target.checked)} /> show all
           languages
         </label>
+        <button onClick={() => setFindingTranslations(true)} disabled={findingTranslations}>
+          Match translations
+        </button>
         {editError && (
           <span className="error" onClick={() => setEditError(undefined)} title="Dismiss">
             {editError} ×
@@ -98,6 +103,9 @@ export function App() {
           onEdit={onEdit}
           build={data.builds.find((b) => b.name === data.currentBuild)}
         />
+        {findingTranslations && (
+          <Suggestions marks={data.translations} entryOf={entryOf} onSelect={setSelected} onEdit={onEdit} onClose={closeSuggestions} />
+        )}
       </main>
     </div>
   );

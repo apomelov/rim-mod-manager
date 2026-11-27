@@ -170,3 +170,15 @@ export async function activate(build: string): Promise<ActivationResult> {
   if (!res.ok) throw await errorOf(res, "activate");
   return res.json();
 }
+
+export interface TranslationSuggestion {
+  translation: string;
+  translationKeys: number;
+  originals: { packageId: string; sharedKeys: number; translatedKeys: number; originalKeys: number; dependency: boolean; link: boolean }[];
+}
+
+export async function fetchSuggestions(): Promise<{ suggestions: TranslationSuggestion[] }> {
+  const res = await fetch("/api/translations/suggestions");
+  if (!res.ok) throw await errorOf(res, "translation suggestions");
+  return res.json();
+}

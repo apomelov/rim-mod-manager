@@ -175,4 +175,19 @@ class ApiTest {
         assertEquals(HttpStatusCode.BadRequest, r.status)
         assertEquals(before, settings.modsConfigFile.readText())
     }
+
+    @Test
+    fun `translation suggestions for Sortout`() = testApplication {
+        val settings = settings()
+        val orig = settings.modsDir.resolve("1")
+        orig.resolve("Defs").createDirectories().resolve("D.xml").writeText("<Defs><ThingDef><defName>Gun</defName></ThingDef><ThingDef><defName>Axe</defName></ThingDef></Defs>")
+        val ru = settings.modsDir.resolve("2").resolve("Languages").resolve("Russian").resolve("DefInjected").resolve("ThingDef").createDirectories()
+        ru.resolve("T.xml").writeText("<LanguageData><Gun.label>пушка</Gun.label><Axe.label>топор</Axe.label></LanguageData>")
+        application { module(settings) }
+
+        val r = json.decodeFromString<SuggestionsResponse>(client.get("/api/translations/suggestions").bodyAsText())
+        val s = r.suggestions.single()
+        assertEquals("a.mod.ru", s.translation.value)
+        assertEquals(listOf("a.mod"), s.originals.map { it.packageId.value })
+    }
 }

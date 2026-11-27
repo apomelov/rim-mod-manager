@@ -99,3 +99,15 @@ code { font-size: .9em; overflow-wrap: anywhere; }
 button.danger { background: #5a2626; border-color: var(--error); }
 .flags { flex: none; display: inline-flex; gap: 2px; font-size: 0.9em; color: var(--muted); }
 .lang-code { font-size: 0.75em; padding: 0 2px; border: 1px solid var(--border); border-radius: 3px; }
+
+main { position: relative; }
+.suggestions { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; background: var(--bg); padding: 8px 8px 0 8px; }
+.sugg-head { flex: none; display: flex; align-items: baseline; gap: 16px; }
+.sugg-head h2 { font-size: 1.1em; margin: 4px 0 8px; }
+.sugg-head button { margin-left: auto; }
+.sugg-table { flex: 1; overflow-y: auto; }
+.sugg-row { display: grid; grid-template-columns: minmax(0, 1fr) 11em minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 3px 4px; border-bottom: 1px solid var(--border); }
+.sugg-row:hover { background: var(--select); }
+.sugg-mod { display: flex; align-items: center; gap: 6px; min-width: 0; cursor: pointer; white-space: nowrap; }
+.sugg-evidence { font-size: 0.85em; white-space: nowrap; }
+.sugg-actions { display: flex; gap: 4px; }
