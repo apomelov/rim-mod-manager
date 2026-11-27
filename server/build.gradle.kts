@@ -64,3 +64,23 @@ tasks.shadowJar {
     archiveFileName = "rimworld-mod-manager.jar"
     from(webBuild) { into("static") }
 }
+
+// --- Distribution: the fat jar plus start scripts, see dist/ ----------------------------------
+
+val dist by tasks.registering(Zip::class) {
+    group = "distribution"
+    description = "Builds build/dist/rimworld-mod-manager.zip: the jar (client included) and start scripts."
+    archiveFileName = "rimworld-mod-manager.zip"
+    destinationDirectory = layout.buildDirectory.dir("dist")
+    into("rimworld-mod-manager") {
+        from(tasks.shadowJar)
+        from(rootProject.layout.projectDirectory.dir("dist"))
+        filesMatching("run.sh") { permissions { unix("rwxr-xr-x") } }
+    }
+}
+
+// The application plugin's own distributions (thin jar + lib/, generated scripts) are not used.
+listOf("distZip", "distTar", "installDist", "shadowDistZip", "shadowDistTar", "installShadowDist").forEach {
+    tasks.named(it) { enabled = false }
+}
+
