@@ -131,4 +131,48 @@ class ApiTest {
         assertEquals("Solo", switched.currentBuild)
         assertTrue("currentBuild: Solo" in settings.libraryFile.readText())
     }
+
+    @Test
+    fun `activation - preview, then write the sorted list with a backup`() = testApplication {
+        val settings = settings()
+        val before = settings.modsConfigFile.readText()
+        application { module(settings) }
+
+        suspend fun post(path: String, body: String) = client.post(path) {
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }
+
+        post("/api/builds/create", """{"name":"Solo"}""")
+        post("/api/builds/select", """{"build":"Solo","mods":["a.mod"],"selected":true}""")
+        post("/api/library/mark-translation", """{"translation":"a.mod.ru","originals":["a.mod"]}""")
+
+        val preview = json.decodeFromString<ActivationPreview>(client.get("/api/builds/activation?build=Solo").bodyAsText())
+        assertEquals(listOf("ludeon.rimworld", "a.mod", "a.mod.ru"), preview.plan.order.map { it.value })
+        assertEquals(before, settings.modsConfigFile.readText()) // preview writes nothing
+
+        val r = post("/api/builds/activate", """{"build":"Solo"}""")
+        assertEquals(HttpStatusCode.OK, r.status, r.bodyAsText())
+        val written = rimmods.scan.ModsConfigReader.read(settings.modsConfigFile)
+        assertEquals(listOf("ludeon.rimworld", "a.mod", "a.mod.ru"), written.activeMods.map { it.value })
+        assertEquals("1.6.1 rev1", written.version)
+        assertEquals(listOf(before), settings.backupDir.toFile().listFiles()!!.map { it.readText() })
+    }
+
+    @Test
+    fun `a blocked build is not written`() = testApplication {
+        val settings = settings()
+        settings.modsDir.resolve("3").resolve("About").createDirectories().resolve("About.xml")
+            .writeText("<ModMetaData><packageId>needs.lib</packageId><modDependencies><li><packageId>no.lib</packageId></li></modDependencies></ModMetaData>")
+        val before = settings.modsConfigFile.readText()
+        application { module(settings) }
+        client.post("/api/builds/create") { contentType(ContentType.Application.Json); setBody("""{"name":"B"}""") }
+        client.post("/api/builds/select") { contentType(ContentType.Application.Json); setBody("""{"build":"B","mods":["needs.lib"],"selected":true}""") }
+
+        val preview = json.decodeFromString<ActivationPreview>(client.get("/api/builds/activation?build=B").bodyAsText())
+        assertTrue(preview.blocked)
+        val r = client.post("/api/builds/activate") { contentType(ContentType.Application.Json); setBody("""{"build":"B"}""") }
+        assertEquals(HttpStatusCode.BadRequest, r.status)
+        assertEquals(before, settings.modsConfigFile.readText())
+    }
 }

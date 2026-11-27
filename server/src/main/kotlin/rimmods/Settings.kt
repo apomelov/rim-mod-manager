@@ -14,8 +14,11 @@ data class Settings(
     val modsDir: Path,
     val modsConfigFile: Path,
     val port: Int,
+    /** The game install; Core and the DLCs are scanned from its `Data` folder. Null: not scanned. */
+    val gameDir: Path? = null,
 ) {
     val libraryFile: Path get() = configDir.resolve("library.yaml")
+    val backupDir: Path get() = configDir.resolve("backups")
 
     companion object {
         /** `-Drmm.configDir` overrides the config folder, e.g. to develop against copies. */
@@ -34,6 +37,7 @@ data class Settings(
                 modsDir = Path(expandHome(dto.modsDir, home)),
                 modsConfigFile = Path(expandHome(dto.modsConfigFile, home)),
                 port = dto.port,
+                gameDir = Path(expandHome(dto.gameDir, home)),
             )
         }
 
@@ -52,6 +56,7 @@ data class Settings(
 
 @Serializable
 private data class SettingsDto(
+    val gameDir: String = "~/.steam/steam/steamapps/common/RimWorld",
     val modsDir: String = "~/.steam/steam/steamapps/workshop/content/294100",
     val modsConfigFile: String = "~/.config/unity3d/Ludeon Studios/RimWorld by Ludeon Studios/Config/ModsConfig.xml",
     val port: Int = 8765,

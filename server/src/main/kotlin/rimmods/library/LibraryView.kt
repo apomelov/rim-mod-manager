@@ -31,6 +31,8 @@ data class LibraryView(
     /** Virtual folder, shown last: mods on disk neither placed in the tree nor shown under an original. */
     val sortout: List<ModEntry>,
     val folders: List<FolderView>,
+    /** Core and the DLCs found in the game folder, in release order: shown first, not movable. */
+    val game: List<ModEntry> = emptyList(),
 )
 
 /**
@@ -38,7 +40,8 @@ data class LibraryView(
  * Folders and mods are sorted by name, case-insensitively; the stored order is ignored.
  */
 object LibrarySync {
-    fun view(library: Library, mods: List<Mod>): LibraryView {
+    /** [game]: Core and the DLCs, shown above the folders as they come (release order). */
+    fun view(library: Library, mods: List<Mod>, game: List<Mod> = emptyList()): LibraryView {
         val onDisk = mods.associateBy { it.packageId }
         val isTranslation = library.translations.keys
 
@@ -78,6 +81,7 @@ object LibrarySync {
             .filter { it !in placed && it !in shownUnderOriginal }
             .map { entry(it) }
             .sortedWith(byName)
-        return LibraryView(sortout, folders)
+        val gameEntries = game.map { ModEntry(it.packageId, it.about.name, hasIcon = it.icon != null) }
+        return LibraryView(sortout, folders, gameEntries)
     }
 }

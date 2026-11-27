@@ -20,14 +20,17 @@ class SettingsTest {
             s.modsConfigFile,
         )
         assertEquals(8765, s.port)
+        assertEquals(Path("/home/u/.steam/steam/steamapps/common/RimWorld"), s.gameDir)
         assertEquals(dir.resolve("library.yaml"), s.libraryFile)
+        assertEquals(dir.resolve("backups"), s.backupDir)
     }
 
     @Test
     fun `values from the file, missing keys default`() {
-        dir.resolve("settings.yaml").writeText("modsDir: ~/mods\nport: 9000\n")
+        dir.resolve("settings.yaml").writeText("modsDir: ~/mods\nport: 9000\ngameDir: /games/rw\n")
         val s = Settings.load(dir, home = "/home/u")
         assertEquals(Path("/home/u/mods"), s.modsDir)
+        assertEquals(Path("/games/rw"), s.gameDir)
         assertEquals(9000, s.port)
         assertEquals(Path("/home/u/.config/unity3d/Ludeon Studios/RimWorld by Ludeon Studios/Config/ModsConfig.xml"), s.modsConfigFile)
     }

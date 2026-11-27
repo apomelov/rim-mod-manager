@@ -1,6 +1,7 @@
 package rimmods.api
 
 import rimmods.Settings
+import rimmods.scan.GameScanner
 import rimmods.scan.GameVersion
 import rimmods.scan.Mod
 import rimmods.scan.ModScanner
@@ -10,8 +11,9 @@ import rimmods.scan.ScanResult
 
 /** The latest disk scan. Rescanned when the library is (re)loaded; detail and image requests use it as is. */
 class AppState(private val settings: Settings) {
-    data class Snapshot(val gameVersion: GameVersion, val scan: ScanResult) {
-        val byId: Map<PackageId, Mod> = scan.mods.associateBy { it.packageId }
+    /** [game]: Core and the DLCs from the game folder; [scan]: the Workshop mods folder. */
+    data class Snapshot(val gameVersion: GameVersion, val scan: ScanResult, val game: List<Mod> = emptyList()) {
+        val byId: Map<PackageId, Mod> = (game + scan.mods).associateBy { it.packageId }
     }
 
     @Volatile
@@ -19,7 +21,9 @@ class AppState(private val settings: Settings) {
 
     fun rescan(): Snapshot {
         val config = ModsConfigReader.read(settings.modsConfigFile)
-        return Snapshot(config.gameVersion, ModScanner(config.gameVersion).scan(settings.modsDir)).also { snapshot = it }
+        val scan = ModScanner(config.gameVersion).scan(settings.modsDir)
+        val game = GameScanner.scan(settings.gameDir, config.gameVersion)
+        return Snapshot(config.gameVersion, scan, game).also { snapshot = it }
     }
 
     fun current(): Snapshot = snapshot ?: rescan()

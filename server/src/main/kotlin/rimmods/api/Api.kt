@@ -25,6 +25,7 @@ import rimmods.library.LibraryView
 import rimmods.scan.GameVersion
 import rimmods.scan.Mod
 import rimmods.scan.PackageId
+import rimmods.export.ModsConfigWriteException
 import rimmods.library.BuildEdits
 import rimmods.scan.Leftovers
 import rimmods.scan.LeftoverException
@@ -69,6 +70,9 @@ fun Application.module(settings: Settings, state: AppState = AppState(settings))
         exception<LibraryFileException> { call, e ->
             call.respond(HttpStatusCode.InternalServerError, ErrorResponse("${settings.libraryFile}: ${e.message}"))
         }
+        exception<ModsConfigWriteException> { call, e ->
+            call.respond(HttpStatusCode.InternalServerError, ErrorResponse(e.message ?: "Cannot write ModsConfig.xml"))
+        }
         exception<LeftoverException> { call, e ->
             call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Cannot delete"))
         }
@@ -93,6 +97,7 @@ fun Application.module(settings: Settings, state: AppState = AppState(settings))
             call.respond(libraryResponse(state, LibraryStore.load(settings.libraryFile)))
         }
         libraryEditRoutes(settings, state)
+        activationRoutes(settings, state)
         post("/api/leftovers/delete") {
             val r = call.receive<DeleteLeftoverRequest>()
             Leftovers.delete(settings.modsDir, r.folder)
@@ -108,7 +113,7 @@ fun libraryResponse(state: AppState, loaded: LoadedLibrary): LibraryResponse {
     val s = state.current()
     return LibraryResponse(
         gameVersion = s.gameVersion,
-        library = LibrarySync.view(loaded.library, s.scan.mods),
+        library = LibrarySync.view(loaded.library, s.scan.mods, s.game),
         translations = loaded.library.translations.map { (k, v) -> k.value to v.map { it.value } }.toMap(),
         problems = s.scan.problems.map {
             Problem("${it.folder}: ${it.message}", removableFolder = if (it.texturesOnly) File(it.folder).name else null)
