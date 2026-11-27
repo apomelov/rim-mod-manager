@@ -34,10 +34,13 @@ tasks.test {
 
 val webDir = rootProject.layout.projectDirectory.dir("web")
 
+/** npm is a .cmd script on Windows, which Exec does not resolve by itself. */
+val npm = if (System.getProperty("os.name").lowercase().startsWith("windows")) "npm.cmd" else "npm"
+
 val npmInstall by tasks.registering(Exec::class) {
     group = "web"
     workingDir = webDir.asFile
-    commandLine("npm", "ci")
+    commandLine(npm, "ci")
     inputs.files(webDir.file("package.json"), webDir.file("package-lock.json"))
     outputs.dir(webDir.dir("node_modules"))
 }
@@ -46,7 +49,7 @@ val webBuild by tasks.registering(Exec::class) {
     group = "web"
     dependsOn(npmInstall)
     workingDir = webDir.asFile
-    commandLine("npm", "run", "build")
+    commandLine(npm, "run", "build")
     inputs.dir(webDir.dir("src"))
     inputs.files(
         webDir.file("index.html"),
