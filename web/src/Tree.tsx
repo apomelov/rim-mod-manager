@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Tree, type NodeApi, type NodeRendererProps, type TreeApi } from "react-arborist";
 import { useConfirm } from "./Dialog";
+import { Flags, visibleLanguages } from "./flags";
 import { ContextMenu } from "./Menu";
 import { buildEdits, iconUrl, libraryEdits, type Build, type LibraryResponse, type LibraryView, type ModEntry } from "./api";
 import { allFolders, buildTree, folderId, freshName, isPredefined, SORTOUT_ID, type TreeNode } from "./treeData";
@@ -11,6 +12,8 @@ type Menu = { x: number; y: number; node: TreeNode | null };
 interface Props {
   view: LibraryView;
   showHidden: boolean;
+  /** Otherwise only English and Russian flags are shown. */
+  showAllLanguages: boolean;
   selected?: string;
   onSelect: (packageId: string) => void;
   /** Runs an edit; on success the app takes the new library. Resolves to whether it succeeded. */
@@ -20,6 +23,7 @@ interface Props {
 }
 
 interface Ctx {
+  showAllLanguages: boolean;
   /** Mods selected in the open build; null when there is no build (no checkboxes). */
   checked: Set<string> | null;
   check: (mods: string[], selected: boolean) => void;
@@ -189,9 +193,19 @@ function Row({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
       {node.isEditing ? <EditInput node={node} /> : <span className="name" title={entry?.packageId}>{d.name}</span>}
       {entry?.missing && <span className="badge">missing</span>}
       {(d.kind === "folder" || d.kind === "sortout") && <span className="count">{d.count}</span>}
-      {d.kind === "mod" && !ctx.showHidden && translationCount > 0 && <span className="badge">+{translationCount} tr</span>}
+      {entry && <Flags languages={visibleLanguages(entry.languages ?? [], ctx.showAllLanguages)} />}
+      {d.kind === "mod" && !ctx.showHidden && translationCount > 0 && (
+        <TranslationBadge translations={entry!.translations!} all={ctx.showAllLanguages} />
+      )}
     </div>
   );
+}
+
+/** "+" and the flags of a mod's translations; "+N tr" when none of their languages is shown. */
+function TranslationBadge({ translations, all }: { translations: ModEntry[]; all: boolean }) {
+  const languages = visibleLanguages(translations.flatMap((t) => t.languages ?? []), all);
+  const flags = <Flags languages={languages} prefix="+" />;
+  return languages.length ? flags : <span className="badge">+{translations.length} tr</span>;
 }
 
 function useSize<T extends HTMLElement>() {
@@ -206,7 +220,7 @@ function useSize<T extends HTMLElement>() {
   return { ref, ...size };
 }
 
-export function LibraryTree({ view, showHidden, selected, onSelect, onEdit, build }: Props) {
+export function LibraryTree({ view, showHidden, showAllLanguages, selected, onSelect, onEdit, build }: Props) {
   const checked = useMemo(() => (build ? new Set(build.mods) : null), [build]);
   const data = useMemo(() => buildTree(view, showHidden), [view, showHidden]);
   const tree = useRef<TreeApi<TreeNode> | null>(null);
@@ -262,6 +276,7 @@ export function LibraryTree({ view, showHidden, selected, onSelect, onEdit, buil
     },
     selected,
     showHidden,
+    showAllLanguages,
     onSelect,
     openMenu: (e, node) => {
       e.preventDefault();

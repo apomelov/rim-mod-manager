@@ -11,6 +11,7 @@ export function App() {
   const [error, setError] = useState<string>();
   const [editError, setEditError] = useState<string>();
   const [showHidden, setShowHidden] = useState(false);
+  const [showAllLanguages, setShowAllLanguages] = useState(false);
   const [selected, setSelected] = useState<string>();
   const confirm = useConfirm();
 
@@ -56,6 +57,10 @@ export function App() {
         <label>
           <input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} /> show hidden
         </label>
+        <label>
+          <input type="checkbox" checked={showAllLanguages} onChange={(e) => setShowAllLanguages(e.target.checked)} /> show all
+          languages
+        </label>
         {editError && (
           <span className="error" onClick={() => setEditError(undefined)} title="Dismiss">
             {editError} ×
@@ -87,6 +92,7 @@ export function App() {
         <LibraryTree
           view={data.library}
           showHidden={showHidden}
+          showAllLanguages={showAllLanguages}
           selected={selected}
           onSelect={setSelected}
           onEdit={onEdit}

@@ -79,6 +79,10 @@ data class Mod(
     /** Resolved image files (absolute paths), see docs/about-xml.md "Images". */
     val preview: String? = null,
     val icon: String? = null,
+    /** Languages the mod ships (see [Languages]), e.g. `Russian`. */
+    val languages: List<String> = emptyList(),
+    /** Own content folders found (`Assemblies`, `Defs`, `Patches`, `Sounds`, `Textures`); none for a pure translation. */
+    val content: List<String> = emptyList(),
 ) {
     val packageId: PackageId get() = about.packageId
 }

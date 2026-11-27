@@ -5,6 +5,7 @@ export interface ModEntry {
   hidden?: boolean;
   translations?: ModEntry[];
   hasIcon?: boolean;
+  languages?: string[];
 }
 
 export interface FolderView {

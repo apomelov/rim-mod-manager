@@ -60,3 +60,5 @@ button.small { padding: 0 4px; font-size: 0.8em; }
 .menu li.disabled { color: var(--muted); cursor: default; }
 .tabs-hint { align-self: center; padding: 0 8px; color: var(--muted); font-style: italic; }
 button.danger { background: #ffe3e3; border-color: #b00020; }
+.flags { flex: none; display: inline-flex; gap: 2px; font-size: 0.9em; color: var(--muted); }
+.lang-code { font-size: 0.75em; padding: 0 2px; border: 1px solid var(--border); border-radius: 3px; }

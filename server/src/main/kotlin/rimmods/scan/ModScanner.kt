@@ -45,9 +45,12 @@ class ModScanner(private val gameVersion: GameVersion) {
         }
         val icons = ImageResolver.icons(unique)
         val withImages = unique.map { m ->
+            val content = Languages.scan(Path.of(m.folder), gameVersion)
             m.copy(
                 preview = ImageResolver.preview(Path.of(m.folder))?.toString(),
                 icon = icons[m.packageId]?.toString(),
+                languages = content.languages,
+                content = content.content,
             )
         }
         return ScanResult(withImages, problems)

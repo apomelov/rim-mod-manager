@@ -16,6 +16,8 @@ data class ModEntry(
     val translations: List<ModEntry> = emptyList(),
     /** An icon can be fetched from `/api/mods/{packageId}/icon`. */
     val hasIcon: Boolean = false,
+    /** Languages the mod ships (Languages folders), e.g. `Russian`. */
+    val languages: List<String> = emptyList(),
 )
 
 @Serializable
@@ -65,6 +67,7 @@ object LibrarySync {
                 emptyList()
             },
             hasIcon = onDisk[id]?.icon != null,
+            languages = onDisk[id]?.languages.orEmpty(),
         )
 
         val folderOrder = compareBy<FolderView>({ it.name.lowercase() }, { it.name })
