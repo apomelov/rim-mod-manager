@@ -26,7 +26,7 @@ Words like "RU" or "Rus" in names are not used.
 
 Each suggestion carries its evidence (shared keys, dependency, link) for display.
 
-**UI**: "Find translations" in the header opens the suggestions over the tree (not as a modal, so the details panel stays usable for checking a mod): one row per pair, original left, translation right, evidence in between (how many of the original's own keys the translation translates, e.g. `6/10 keys (60%)`, plus dependency/link); ✓ adds the original to the translation's mark and removes the row, × dismisses it for this session. The same original can come up for several translations, and one translation for several originals.
+**UI**: "Match translations" in the header opens the suggestions over the tree (not as a modal, so the details panel stays usable for checking a mod): one row per pair, original left, translation right, evidence in between (how many of the original's own keys the translation translates, e.g. `6/10 keys (60%)`, plus dependency/link); ✓ adds the original to the translation's mark and removes the row, × dismisses it for this session. The same original can come up for several translations, and one translation for several originals.
 
 ## Validation
 
