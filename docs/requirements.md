@@ -15,7 +15,7 @@ Goals:
 - **Translations follow their mod.** Picking a mod silently brings its translation(s) from the collection.
 - **A readable library.** One user-controlled hierarchy (folders) instead of tags or graphs; derived relations stay out of sight.
 - **Builds as first-class objects.** Named mod sets that can be switched, duplicated and activated in one click.
-- **Clean hand-off to the game.** Export writes the mod list; sorting is delegated to RimSort, not reimplemented.
+- **Clean hand-off to the game.** Export writes a mod list the game can start with: sorted by the game's own rules (dependencies, load before/after), so no extra start-up to fix the order.
 
 Principle: where the game has a defined behaviour (how it finds a mod's icon, treats packageIds, resolves versions), the app mirrors it.
 
@@ -97,7 +97,10 @@ Why manual first: the mark must be correct and always reconfigurable; automation
 
 ## Builds
 
-Builds are tabs over the same tree; switching a tab changes the checkboxes, nothing else.
+Builds are tabs over the same tree; switching a tab changes the checkboxes, nothing else: folders' expanded state belongs to the library, not to a build, and the tree keeps its scroll position.
+
+- **Tabs** sit above the tree, like browser tabs; the last one, "+", creates a new build. A tab's context menu: rename, duplicate, delete (with confirmation), activate (with confirmation: the selected mods, their required dependencies and the available translations will be written directly to the game's mod list). The current tab is stored in the library file.
+- **Checkboxes** are hidden while there are no builds. Sortout has no folder checkbox (one click must not select every unsorted mod); the mods inside it do. Translation rows have none: translations are added at activation.
 
 - **Content:** a build stores only explicitly selected mods. Dependencies, translations and libraries are added at activation, never stored.
 - **Folder state is not stored.** A new mod placed into a folder does not auto-join any build.
@@ -130,17 +133,17 @@ A separate "Remove missing" action cleans up missing mods deliberately; mods are
 
 ## Export pipeline
 
-Activate turns a build into the game's mod list in a straight run, then hands sorting to RimSort.
+Activate turns a build into the game's mod list in a straight run, sorted so that the game starts with it as is.
 
 1. Collect the explicitly selected mods of the build.
 2. Add transitive dependencies (from About.xml).
 3. Add translations of every mod in the set.
 4. Check for problems: missing mods, missing dependencies. A missing dependency **blocks activation** and is listed: the game would not run with that list anyway, and the fix (subscribing and adding the mod) happens through this app. A missing *selected* mod only produces a warning: the rest of the list still runs.
 5. Back up the current `ModsConfig.xml`.
-6. Write the new mod list directly to `ModsConfig.xml` (the file the game reads; RimSort works on the same file).
-7. Launch RimSort to sort by community rules.
+6. Sort the list the way the game's own mod manager does: Core and DLCs first, then a topological order by dependencies and `loadAfter`/`loadBefore` (+ `forceLoad…`, version-specific variants). The exact rules (tie-breaks, cycles) are taken from the game's behaviour and pinned down in a spec before implementation.
+7. Write the new mod list directly to `ModsConfig.xml` (the file the game reads).
 
-Sorting logic is not reimplemented: community rules change and are maintained by others.
+Why sort at all: not every user runs RimSort, and an unsorted list means starting the game, fixing the order in its mod manager and restarting, which takes minutes for a large build. Community rule databases (RimSort's) are not reimplemented: they change and are maintained by others; launching RimSort after activation may come later as an option.
 
 ## Core and DLCs
 
@@ -172,7 +175,7 @@ The MVP is tree + checkboxes + builds + export; everything else waits until it h
 - Marking translations by hand; auto-inclusion at export.
 - Library tree with drag and drop, derived tri-state folder checkboxes, show hidden.
 - Build tabs: create, duplicate, rename, activate.
-- Export pipeline with backup and RimSort hand-off.
+- Export pipeline with backup and the game's basic sort.
 
 **Later:**
 
@@ -183,7 +186,7 @@ The MVP is tree + checkboxes + builds + export; everything else waits until it h
 
 **Non-goals:**
 
-- Reimplementing load-order sorting.
+- Reimplementing community sorting rules (RimSort's rule databases).
 - Tags, graphs or multi-placement of mods.
 - Downloading or subscribing to mods.
 

@@ -35,8 +35,10 @@ translations:        # mods marked as translations → the mods they translate
 builds:
   - name: Solo
     mods: [some.author.mod, another.mod]
+currentBuild: Solo   # the tab open in the UI; optional
 ```
 
+- **currentBuild:** the name of the open tab; missing or unknown → the first build.
 - **Folders:** a tree; each folder has `name`, optional `expanded` (default `false`), `folders` and `mods`. The order of the lists does not matter: the UI sorts subfolders and mods by name (subfolders first).
 - **Translations** are the user's marks: a key is a translation mod, its value the mods it translates (may be empty or name mods not on disk). A marked translation is hidden and shown under each of its originals that is on disk.
 - **Sortout** is not stored: it is computed as every mod on disk that is neither in the tree nor shown under an original, and is shown as the first, virtual folder.
