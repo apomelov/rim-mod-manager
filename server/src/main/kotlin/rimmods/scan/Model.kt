@@ -79,7 +79,12 @@ data class Mod(
 }
 
 @Serializable
-data class ScanProblem(val folder: String, val message: String)
+data class ScanProblem(
+    val folder: String,
+    val message: String,
+    /** A folder holding only `.dds` textures: leftovers of a removed mod that the user may delete from the app. */
+    val texturesOnly: Boolean = false,
+)
 
 @Serializable
 data class ScanResult(val mods: List<Mod>, val problems: List<ScanProblem>)

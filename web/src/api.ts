@@ -24,7 +24,13 @@ export interface LibraryResponse {
   library: LibraryView;
   /** translation packageId → packageIds it translates */
   translations: Record<string, string[]>;
-  problems: string[];
+  problems: Problem[];
+}
+
+export interface Problem {
+  message: string;
+  /** Set when the app may delete this mods-folder entry (only .dds textures left): its folder name. */
+  removableFolder?: string;
 }
 
 export interface Dependency {
@@ -75,14 +81,21 @@ export async function fetchMod(packageId: string): Promise<ModDetails | undefine
 }
 
 async function edit(command: string, body: object): Promise<LibraryResponse> {
-  const res = await fetch(`/api/library/${command}`, {
+  return post(`/api/library/${command}`, body);
+}
+
+async function post(url: string, body: object): Promise<LibraryResponse> {
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw await errorOf(res, command);
+  if (!res.ok) throw await errorOf(res, url);
   return res.json();
 }
+
+/** Deletes a leftover folder (only .dds textures) from the mods folder; the server re-checks it first. */
+export const deleteLeftover = (folder: string) => post("/api/leftovers/delete", { folder });
 
 /** Folder paths look like `QoL/base`; the root is "". `to: null` means Sortout. */
 export const libraryEdits = {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchLibrary, type LibraryResponse } from "./api";
+import { deleteLeftover, fetchLibrary, type LibraryResponse, type Problem } from "./api";
 import { Details } from "./Details";
 import { LibraryTree } from "./Tree";
 import { allMods } from "./treeData";
@@ -28,6 +28,12 @@ export function App() {
     }
   };
 
+  const removeLeftover = (p: Problem) => {
+    if (window.confirm(`Delete folder "${p.removableFolder}" from the mods folder? It holds only .dds textures.`)) {
+      onEdit(deleteLeftover(p.removableFolder!));
+    }
+  };
+
   if (error) return <p className="error">{error}</p>;
   if (!data) return <p>Scanning…</p>;
 
@@ -52,7 +58,17 @@ export function App() {
         {data.problems.length > 0 && (
           <ul className="error problems">
             {data.problems.map((p) => (
-              <li key={p}>{p}</li>
+              <li key={p.message}>
+                {p.message}
+                {p.removableFolder && (
+                  <>
+                    {" "}
+                    <button className="small" onClick={() => removeLeftover(p)}>
+                      Delete folder
+                    </button>
+                  </>
+                )}
+              </li>
             ))}
           </ul>
         )}

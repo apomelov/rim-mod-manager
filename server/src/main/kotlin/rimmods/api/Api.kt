@@ -9,7 +9,9 @@ import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondFile
 import io.ktor.server.routing.RoutingCall
+import io.ktor.server.request.receive
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
@@ -23,6 +25,8 @@ import rimmods.library.LibraryView
 import rimmods.scan.GameVersion
 import rimmods.scan.Mod
 import rimmods.scan.PackageId
+import rimmods.scan.Leftovers
+import rimmods.scan.LeftoverException
 import rimmods.scan.ScanProblem
 import java.io.File
 
@@ -35,9 +39,19 @@ data class LibraryResponse(
     val library: LibraryView,
     /** Translation marks: translation packageId → the packageIds it translates. */
     val translations: Map<String, List<String>>,
-    /** Scan problems and library-file problems, as readable lines. */
-    val problems: List<String>,
+    /** Scan problems and library-file problems. */
+    val problems: List<Problem>,
 )
+
+@Serializable
+data class Problem(
+    val message: String,
+    /** Set for a mods-folder entry the app may delete (see [Leftovers]): its folder name. */
+    val removableFolder: String? = null,
+)
+
+@Serializable
+data class DeleteLeftoverRequest(val folder: String)
 
 @Serializable
 data class ErrorResponse(val error: String)
@@ -47,6 +61,9 @@ fun Application.module(settings: Settings, state: AppState = AppState(settings))
     install(StatusPages) {
         exception<LibraryFileException> { call, e ->
             call.respond(HttpStatusCode.InternalServerError, ErrorResponse("${settings.libraryFile}: ${e.message}"))
+        }
+        exception<LeftoverException> { call, e ->
+            call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Cannot delete"))
         }
         exception<LibraryEditException> { call, e ->
             call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Edit rejected"))
@@ -69,6 +86,12 @@ fun Application.module(settings: Settings, state: AppState = AppState(settings))
             call.respond(libraryResponse(state, LibraryStore.load(settings.libraryFile)))
         }
         libraryEditRoutes(settings, state)
+        post("/api/leftovers/delete") {
+            val r = call.receive<DeleteLeftoverRequest>()
+            Leftovers.delete(settings.modsDir, r.folder)
+            state.rescan()
+            call.respond(libraryResponse(state, LibraryStore.load(settings.libraryFile)))
+        }
         // Client build, present only in the fat jar; in development Vite serves the client.
         staticResources("/", "static")
     }
@@ -80,7 +103,9 @@ fun libraryResponse(state: AppState, loaded: LoadedLibrary): LibraryResponse {
         gameVersion = s.gameVersion,
         library = LibrarySync.view(loaded.library, s.scan.mods),
         translations = loaded.library.translations.map { (k, v) -> k.value to v.map { it.value } }.toMap(),
-        problems = s.scan.problems.map { "${it.folder}: ${it.message}" } + loaded.problems,
+        problems = s.scan.problems.map {
+            Problem("${it.folder}: ${it.message}", removableFolder = if (it.texturesOnly) File(it.folder).name else null)
+        } + loaded.problems.map { Problem(it) },
     )
 }
 

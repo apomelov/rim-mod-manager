@@ -53,6 +53,27 @@ class ModScannerTest {
     }
 
     @Test
+    fun `a folder with only dds textures left is flagged as removable leftovers`() {
+        val textures = dir.resolve("444").resolve("1.6").resolve("Textures").createDirectories()
+        textures.resolve("a.dds").writeText("dds")
+        textures.resolve("B.DDS").writeText("dds")
+        val problem = scanner.scan(dir).problems.single()
+        assertTrue(problem.texturesOnly)
+        assertTrue(".dds" in problem.message, problem.message)
+    }
+
+    @Test
+    fun `a folder without About xml but with other files is not removable`() {
+        val textures = dir.resolve("555").resolve("Textures").createDirectories()
+        textures.resolve("a.dds").writeText("dds")
+        textures.resolve("a.png").writeText("png")
+        dir.resolve("666").createDirectories() // empty
+        val problems = scanner.scan(dir).problems
+        assertEquals(listOf(false, false), problems.map { it.texturesOnly })
+        assertTrue(problems.all { "About.xml" in it.message && "removed mod" in it.message }, problems.toString())
+    }
+
+    @Test
     fun `scan resolves preview and icon`() {
         mod("111", "a.one")
         val about = dir.resolve("111").resolve("About")

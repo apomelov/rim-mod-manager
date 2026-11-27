@@ -20,7 +20,11 @@ class ModScanner(private val gameVersion: GameVersion) {
         for (folder in modsDir.listDirectoryEntries().filter { it.isDirectory() }.sortedBy { it.name }) {
             val about = folder.resolve("About").resolve("About.xml")
             if (!about.exists()) {
-                problems += ScanProblem(folder.toString(), "No About/About.xml")
+                problems += if (Leftovers.isTexturesOnly(folder)) {
+                    ScanProblem(folder.toString(), Leftovers.TEXTURES_ONLY_MESSAGE, texturesOnly = true)
+                } else {
+                    ScanProblem(folder.toString(), "No About/About.xml: not a mod, probably leftovers of a removed mod")
+                }
                 continue
             }
             try {

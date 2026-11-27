@@ -10,10 +10,12 @@ import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.io.TempDir
@@ -77,5 +79,31 @@ class ApiTest {
         assertEquals(HttpStatusCode.BadRequest, r.status)
         assertTrue("UI" in r.bodyAsText())
         assertEquals(before, settings.libraryFile.readText())
+    }
+
+    @Test
+    fun `a leftover folder with only dds textures can be deleted, nothing else can`() = testApplication {
+        val settings = settings()
+        val leftover = settings.modsDir.resolve("3").resolve("Textures").createDirectories()
+        leftover.resolve("x.dds").writeText("dds")
+        application { module(settings) }
+
+        suspend fun delete(folder: String) = client.post("/api/leftovers/delete") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"folder":"$folder"}""")
+        }
+
+        val first = json.decodeFromString<LibraryResponse>(client.get("/api/library").bodyAsText())
+        assertEquals(listOf("3"), first.problems.mapNotNull { it.removableFolder })
+
+        assertEquals(HttpStatusCode.BadRequest, delete("1").status) // a real mod
+        assertEquals(HttpStatusCode.BadRequest, delete("..").status)
+        assertEquals(HttpStatusCode.BadRequest, delete("nope").status)
+        assertTrue(settings.modsDir.resolve("1").exists())
+
+        val r = delete("3")
+        assertEquals(HttpStatusCode.OK, r.status)
+        assertFalse(settings.modsDir.resolve("3").exists())
+        assertEquals(emptyList(), json.decodeFromString<LibraryResponse>(r.bodyAsText()).problems)
     }
 }
