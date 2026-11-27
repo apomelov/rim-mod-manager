@@ -1,21 +1,22 @@
 # User files
 
-Both files live in `$XDG_CONFIG_HOME/rimmodmanager/` (default `~/.config/rimmodmanager/`). They are YAML so they can be edited by hand; the app rewrites them whole on save, so hand-written comments do not survive.
+Both files live in the app's config folder (Linux `$XDG_CONFIG_HOME/rimmodmanager`, Windows `%APPDATA%\rimmodmanager`, macOS `~/Library/Application Support/rimmodmanager`); `library.yaml` can be moved elsewhere with the `libraryFile` setting. They are YAML so they can be edited by hand; the app rewrites them whole on save, so hand-written comments do not survive.
 
 ## settings.yaml
 
-Machine-specific paths; not meant for git.
+Machine-specific paths; not meant for git. Keys, defaults, checks and how the app detects them on Linux, Windows and macOS: `docs/paths.md`. Without this file the app opens a welcome page and writes it from there.
 
 ```yaml
 gameDir: ~/.steam/steam/steamapps/common/RimWorld
-modsDir: ~/.steam/steam/steamapps/workshop/content/294100
-modsConfigFile: ~/.config/unity3d/Ludeon Studios/RimWorld by Ludeon Studios/Config/ModsConfig.xml
+gameConfigDir: ~/.config/unity3d/Ludeon Studios/RimWorld by Ludeon Studios/Config
+workshopDir: ~/.steam/steam/steamapps/workshop/content/294100
+localModsDir: ~/.steam/steam/steamapps/common/RimWorld/Mods
+libraryFile: ~/.config/rimmodmanager/library.yaml
 port: 8765
 ```
 
 - A leading `~` is expanded to the home directory.
-- Missing file or missing keys → the defaults above.
-- `gameDir` is read only: Core and the DLCs are scanned from its `Data` folder.
+- `gameDir` and the mods folders are read only (apart from deleting a leftover folder on request).
 
 ## library.yaml
 
