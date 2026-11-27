@@ -162,7 +162,7 @@ A local web application for Linux, Windows and macOS (the author plays on Kubunt
 
 - **Backend:** Kotlin + Ktor. Spring is overkill for a single-user local tool.
 - **Frontend:** React + TypeScript, built with Vite. A ready-made tree component (e.g. react-arborist) covers drag and drop and checkboxes.
-- **Build:** one Gradle project. The full build bundles the client's artifacts into the server, which serves them as static files alongside the API: one jar plus a run script (`run.sh` on Linux and macOS, `run.cmd` on Windows) that starts the server on localhost and opens the browser.
+- **Build:** one Gradle project. The full build bundles the client's artifacts into the server, which serves them as static files alongside the API: one jar plus a run script (`run.sh` on Linux and macOS, `run.cmd` on Windows) that starts the server on localhost and opens the browser. The distribution (`./gradlew :server:dist` → `server/build/dist/rimworld-mod-manager.zip`) holds the jar, start scripts from `dist/` and a README; it needs Java 21. The `run.sh`/`run.cmd` in the repository root are for development (they build the jar first). Native packages with a bundled Java (`jpackage`, built per OS in CI) are an option for later.
 - **Development:** Vite dev server with hot reload, proxying API calls to Ktor.
 - **Logic placement:** the domain logic (scan, sync, translations, export) lives in Kotlin with JUnit tests; the frontend stays thin.
 
